@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Daftar Transaksi{% endblock %}
+
+{% block content %}
+<h1>Daftar Transaksi</h1>
+
+<table style="width:100%; border-collapse: collapse;">
+    <thead>
+        <tr style="border-bottom: 2px solid #333;">
+            <th style="padding: 8px; text-align: left;">Tanggal</th>
+            <th style="padding: 8px; text-align: left;">Tipe</th>
+            <th style="padding: 8px; text-align: left;">Penerima/Tujuan</th>
+            <th style="padding: 8px; text-align: left;">Kategori</th>
+            <th style="padding: 8px; text-align: right;">Jumlah</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for tx in transactions %}
+            <tr style="border-bottom: 1px solid #ddd">
+                <td style="padding: 8px;">{{ tx.transaction_date|date:"d M Y" }}</td>
+                <td style="padding: 8px;">{{ tx.get_transaction_type_display }}</td>
+                <td style="padding: 8px;">{{ tx.payee.name|default:"-" }}</td>
+                <td style="padding: 8px;">{{ tx.category.name|default:"-" }}</td>
+                <td style="padding: 8px; text-align: right;">Rp {{ tx.amount|floatformat:0 }}</td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="5" style="padding: 20px; text-align: center;">Belum ada transaksi.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
