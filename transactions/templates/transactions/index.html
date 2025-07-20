@@ -1,12 +1,39 @@
 {% extends 'base.html' %}
 
-{% block title %}Daftar Transaksi{% endblock %}
-
 {% block content %}
-<h1>Daftar Transaksi</h1>
+    <h1>Daftar Transaksi</h1>
 
-<table style="width:100%; border-collapse: collapse;">
-    <thead>
+    <form action="{% url 'transaction_add' %}" method="post" style="margin-bottom: 20px;">
+        {% csrf_token %}
+        <div>
+            <input type="text" name="payee" placeholder="Bayar ke/Terima dari..." required>
+            <input type="number" name="amount" placeholder="Jumlah" step="0.01" required>
+            <select name="transaction_type" required>
+                <option value="PENGELUARAN">Pengeluaran</option>
+                <option value="PEMASUKAN">Pemasukan</option>
+            </select>
+        </div>
+        <div style="margin-top: 10px;">
+            <select name="wallet" required>
+                <option value="">Pilih Dompet...</option>
+                {% for wallet in wallets %}
+                    <option value="{{ wallet.pk }}">{{ wallet.name }}</option>
+                {% endfor %}
+            </select>
+            <select name="category" required>
+                <option value="">Pilih Kategori...</option>
+                {% for category in categories %}
+                    <option value="{{ category.pk }}">{{ category.name }}</option>
+                {% endfor %}
+            </select>
+            <input type="date" name="transaction_date" required>
+            <button type="submit">Tambah</button>
+        </div>
+    </form>
+    <hr>
+
+    <table style="width:100%; border-collapse: collapse;">
+        <thead>
         <tr style="border-bottom: 2px solid #333;">
             <th style="padding: 8px; text-align: left;">Tanggal</th>
             <th style="padding: 8px; text-align: left;">Tipe</th>
@@ -14,8 +41,8 @@
             <th style="padding: 8px; text-align: left;">Kategori</th>
             <th style="padding: 8px; text-align: right;">Jumlah</th>
         </tr>
-    </thead>
-    <tbody>
+        </thead>
+        <tbody>
         {% for tx in transactions %}
             <tr style="border-bottom: 1px solid #ddd">
                 <td style="padding: 8px;">{{ tx.transaction_date|date:"d M Y" }}</td>
@@ -29,6 +56,6 @@
                 <td colspan="5" style="padding: 20px; text-align: center;">Belum ada transaksi.</td>
             </tr>
         {% endfor %}
-    </tbody>
-</table>
+        </tbody>
+    </table>
 {% endblock %}
