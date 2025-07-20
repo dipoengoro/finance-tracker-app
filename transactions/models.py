@@ -19,18 +19,20 @@ class Wallet(models.Model):
     def __str__(self):
         return self.name
 
+
 class Payee(models.Model):
     name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.name
 
+
 class Transaction(models.Model):
     class TransactionType(models.TextChoices):
         INCOME = 'PEMASUKAN', 'Pemasukan'
         EXPENSE = 'PENGELUARAN', 'Pengeluaran'
 
-    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE)
+    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='transactions')
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
     payee = models.ForeignKey(Payee, on_delete=models.SET_NULL, null=True, blank=True)
 
@@ -41,4 +43,4 @@ class Transaction(models.Model):
     notes = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.transaction_type} - {self.amount} - {self.payee}"
+        return f"{self.payee} - {self.amount}"
