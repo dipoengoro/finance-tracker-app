@@ -47,4 +47,20 @@ def transaction_add(request):
             wallet.balance += amount
         wallet.save()
 
-    return redirect(reverse('transactions_list'))
+    return redirect(reverse('transaction_list'))
+
+def transaction_delete(request, pk):
+    if request.method == 'POST':
+        transaction = Transaction.objects.get(pk=pk)
+        wallet = transaction.wallet
+        amount = transaction.amount
+
+        if transaction.transaction_type == 'PENGELUARAN':
+            wallet.balance += amount
+        elif transaction.transaction_type == 'PEMASUKAN':
+            wallet.balance -= amount
+        wallet.save()
+
+        transaction.delete()
+
+    return redirect(reverse('transaction_list'))

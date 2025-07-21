@@ -40,6 +40,7 @@
             <th style="padding: 8px; text-align: left;">Penerima/Tujuan</th>
             <th style="padding: 8px; text-align: left;">Kategori</th>
             <th style="padding: 8px; text-align: right;">Jumlah</th>
+            <th style="padding: 8px; text-align: center;">Aksi</th>
         </tr>
         </thead>
         <tbody>
@@ -50,6 +51,14 @@
                 <td style="padding: 8px;">{{ tx.payee.name|default:"-" }}</td>
                 <td style="padding: 8px;">{{ tx.category.name|default:"-" }}</td>
                 <td style="padding: 8px; text-align: right;">Rp {{ tx.amount|floatformat:0 }}</td>
+                <td style="padding: 8px; text-align: center;">
+                    <form action="{% url 'transaction_delete' tx.pk %}" method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" style="color: red; border: none; background: none; cursor: pointer;">
+                            Hapus
+                        </button>
+                    </form>
+                </td>
             </tr>
         {% empty %}
             <tr>
