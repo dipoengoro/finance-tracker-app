@@ -26,13 +26,13 @@ def transaction_add(request):
     if request.method == 'POST':
         wallet_id = request.POST.get('wallet')
         payee_name = request.POST.get('payee')
-        category_id = request.POST.get('category')
+        category_name = request.POST.get('category')
         amount = Decimal(request.POST.get('amount'))
         trans_type = request.POST.get('transaction_type')
         trans_date = request.POST.get('transaction_date')
 
         wallet = Wallet.objects.get(pk=wallet_id)
-        category = Category.objects.get(pk=category_id)
+        category, _ = Category.objects.get_or_create(name=category_name)
         payee, _ = Payee.objects.get_or_create(name=payee_name)
 
         Transaction.objects.create(

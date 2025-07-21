@@ -17,15 +17,23 @@
                 </select>
             </div>
             <div class="col-md-4">
-                <input type="text" name="payee" class="form-control" placeholder="Bayar ke/Terima dari..." required>
+                <input list="payee-list" name="payee" class="form-control" placeholder="Bayar ke/Terima dari..."
+                       required>
+                <datalist id="payee-list">
+                    {% for payee in payees %}
+                        <option value="{{ payee.name }}">
+                    {% endfor %}
+                </datalist>
+
             </div>
             <div class="col-md-4">
-                <select name="category" class="form-select" required>
-                    <option value="">Pilih Kategori...</option>
+                <input list="category-list" name="category" class="form-control"
+                       placeholder="Pilih atau buat kategori..." required>
+                <datalist id="category-list">
                     {% for category in categories %}
-                        <option value="{{ category.pk }}">{{ category.name }}</option>
+                        <option value="{{ category.name }}">
                     {% endfor %}
-                </select>
+                </datalist>
             </div>
             <div class="col-md-4">
                 <div class="input-group">
