@@ -1,20 +1,18 @@
-# file: transactions/tests.py
 from django.test import TestCase
+from django.urls import reverse
 from django.db.utils import IntegrityError
 from decimal import Decimal
 from datetime import date
-from .models import Category, Wallet, Budget
+from .models import Category, Wallet, Payee, Transaction, Budget
 
 
 class ModelTests(TestCase):
 
     def test_create_category(self):
-        """Tes pembuatan objek Category dan method __str__."""
         category = Category.objects.create(name="Makanan")
         self.assertEqual(str(category), "Makanan")
 
     def test_create_wallet(self):
-        """Tes pembuatan objek Wallet dengan nilai default."""
         wallet = Wallet.objects.create(name="BCA")
         self.assertEqual(str(wallet), "BCA")
         self.assertEqual(wallet.wallet_type, 'ASET')
@@ -39,3 +37,49 @@ class ModelTests(TestCase):
 
         with self.assertRaises(IntegrityError):
             Budget.objects.create(category=category, amount=Decimal('250000.00'), month=month)
+
+
+class TransactionViewTests(TestCase):
+    def setUp(self):
+        self.wallet = Wallet.objects.create(name="BCA", balance=Decimal('1000000'))
+        self.category = Category.objects.create(name="Makanan")
+        self.payee = Payee.objects.create(name="Warung Padang")
+
+    def test_transaction_list_view(self):
+        Transaction.objects.create(
+            wallet=self.wallet,
+            category=self.category,
+            payee=self.payee,
+            amount=Decimal('25000'),
+            transaction_type='PENGELUARAN',
+            transaction_date=date.today()
+        )
+
+        response = self.client.get(reverse('transaction_list'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'transactions/index.html')
+        self.assertContains(response, "Warung Padang")  # Cek apakah data payee muncul
+        self.assertEqual(len(response.context['transactions']), 1)
+
+    def test_add_transaction(self):
+        initial_transaction_count = Transaction.objects.count()
+
+        form_data = {
+            'wallet': self.wallet.pk,
+            'category': self.category.pk,
+            'payee': self.payee.name,  # Ingat, kita mengirim nama untuk get_or_create
+            'amount': '50000',
+            'transaction_type': 'PENGELUARAN',
+            'transaction_date': date.today().strftime('%Y-%m-%d'),
+        }
+
+        response = self.client.post(reverse('transaction_add'), data=form_data)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('transaction_list'))
+
+        self.assertEqual(Transaction.objects.count(), initial_transaction_count + 1)
+
+        self.wallet.refresh_from_db()
+        self.assertEqual(self.wallet.balance, Decimal('950000'))
