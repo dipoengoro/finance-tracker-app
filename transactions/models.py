@@ -44,3 +44,14 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"{self.payee} - {self.amount}"
+
+class Budget(models.Model):
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='budgets')
+    amount = models.DecimalField(max_digits=15, decimal_places=2)
+    month = models.DateField()
+
+    class Meta:
+        unique_together = ('category', 'month')
+
+    def __str__(self):
+        return f"Budget for {self.category.name} in {self.month.strftime('%B %Y')}"
