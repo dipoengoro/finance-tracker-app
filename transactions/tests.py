@@ -83,3 +83,49 @@ class TransactionViewTests(TestCase):
 
         self.wallet.refresh_from_db()
         self.assertEqual(self.wallet.balance, Decimal('950000'))
+
+        def test_delete_transaction(self):
+            expense = Transaction.objects.create(
+                wallet=self.wallet, category=self.category, payee=self.payee,
+                amount=Decimal('50000'), transaction_type='PENGELUARAN',
+                transaction_date=date.today()
+            )
+            self.wallet.balance -= Decimal('50000')
+            self.wallet.save()
+
+            initial_balance = self.wallet.balance
+            self.assertEqual(Transaction.objects.count(), 1)
+
+            response = self.client.post(reverse('transaction_delete', kwargs={'pk': expense.pk}))
+
+            self.assertEqual(response.status_code, 302)  # Cek redirect
+            self.assertEqual(Transaction.objects.count(), 0)  # Cek data terhapus
+            self.wallet.refresh_from_db()
+            self.assertEqual(self.wallet.balance, initial_balance + expense.amount)
+
+        def test_update_transaction(self):
+            expense = Transaction.objects.create(
+                wallet=self.wallet, category=self.category, payee=self.payee,
+                amount=Decimal('100000'), transaction_type='PENGELUARAN',
+                transaction_date=date.today()
+            )
+            self.wallet.balance -= Decimal('100000')
+            self.wallet.save()
+
+            form_data = {
+                'wallet': self.wallet.pk,
+                'category': self.category.pk,
+                'payee': self.payee.pk,
+                'amount': '75000',  # Ubah jumlah pengeluaran
+                'transaction_type': 'PENGELUARAN',
+                'transaction_date': date.today().strftime('%Y-%m-%d'),
+            }
+
+            response = self.client.post(reverse('transaction_update', kwargs={'pk': expense.pk}), data=form_data)
+
+            self.assertEqual(response.status_code, 302)  # Cek redirect
+            expense.refresh_from_db()
+            self.wallet.refresh_from_db()
+
+            self.assertEqual(expense.amount, Decimal('75000'))
+            self.assertEqual(self.wallet.balance, Decimal('925000'))
