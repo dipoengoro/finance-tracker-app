@@ -52,6 +52,7 @@
                 <td style="padding: 8px;">{{ tx.category.name|default:"-" }}</td>
                 <td style="padding: 8px; text-align: right;">Rp {{ tx.amount|floatformat:0 }}</td>
                 <td style="padding: 8px; text-align: center;">
+                    <a href="{% url 'transaction_update' tx.pk %}" style="margin-right: 10px;">Edit</a>
                     <form action="{% url 'transaction_delete' tx.pk %}" method="post" style="display: inline;">
                         {% csrf_token %}
                         <button type="submit" style="color: red; border: none; background: none; cursor: pointer;">

@@ -1,6 +1,9 @@
+from http.client import responses
+
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from django.views.generic import ListView
+from django.views.generic import ListView, UpdateView
+from django.urls import reverse_lazy
 from unicodedata import category
 
 from .models import Transaction, Category, Wallet, Payee
@@ -64,3 +67,36 @@ def transaction_delete(request, pk):
         transaction.delete()
 
     return redirect(reverse('transaction_list'))
+
+class TransactionUpdateView(UpdateView):
+    model = Transaction
+    fields = ['transaction_date', 'wallet', 'category', 'payee', 'amount', 'transaction_type', 'notes']
+    template_name = 'transactions/transaction_form.html'
+
+    def get_success_url(self):
+        return reverse_lazy('transaction_list')
+
+    def form_valid(self, form):
+        old_transaction = Transaction.objects.get(pk=self.object.pk)
+        old_wallet = old_transaction.wallet
+        old_amount = old_transaction.amount
+
+        if old_transaction.transaction_type == 'PENGELUARAN':
+            old_wallet.balance += old_amount
+        elif old_transaction.transaction_type == 'PEMASUKAN':
+            old_wallet.balance -= old_amount
+        old_wallet.save()
+
+        response = super().form_valid(form)
+
+        new_transaction = self.object
+        new_wallet = new_transaction.wallet
+        new_amount = new_transaction.amount
+
+        if new_transaction.transaction_type == 'PENGELUARAN':
+            new_wallet.balance -= new_amount
+        elif new_transaction.transaction_type == 'PEMASUKAN':
+            new_wallet.balance += new_amount
+        new_wallet.save()
+
+        return response
