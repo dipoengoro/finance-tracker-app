@@ -70,33 +70,33 @@ def transaction_delete(request, pk):
 
 class TransactionUpdateView(UpdateView):
     model = Transaction
-    fields = ['transaction_date', 'wallet', 'category', 'payee', 'amount', 'transaction_type', 'notes']
+    fields = ['transaction_date', 'wallet', 'category', 'payee', 'amount', 'admin_fee', 'transaction_type', 'notes']
     template_name = 'transactions/transaction_form.html'
 
     def get_success_url(self):
         return reverse_lazy('transaction_list')
 
     def form_valid(self, form):
-        old_transaction = Transaction.objects.get(pk=self.object.pk)
+        old_transaction = self.get_object()
+
+        self.object = form.save(commit=False)
+
         old_wallet = old_transaction.wallet
-        old_amount = old_transaction.amount
-
         if old_transaction.transaction_type == 'PENGELUARAN':
-            old_wallet.balance += old_amount
+            old_wallet.balance += (old_transaction.amount + old_transaction.admin_fee)
         elif old_transaction.transaction_type == 'PEMASUKAN':
-            old_wallet.balance -= old_amount
-        old_wallet.save()
+            old_wallet.balance -= old_transaction.amount
 
-        response = super().form_valid(form)
+        if old_wallet.pk != self.object.wallet.pk:
+            old_wallet.save()
 
-        new_transaction = self.object
-        new_wallet = new_transaction.wallet
-        new_amount = new_transaction.amount
-
-        if new_transaction.transaction_type == 'PENGELUARAN':
-            new_wallet.balance -= new_amount
-        elif new_transaction.transaction_type == 'PEMASUKAN':
-            new_wallet.balance += new_amount
+        new_wallet = self.object.wallet
+        if self.object.transaction_type == 'PENGELUARAN':
+            new_wallet.balance -= (self.object.amount + self.object.admin_fee)
+        elif self.object.transaction_type == 'PEMASUKAN':
+            new_wallet.balance += self.object.amount
         new_wallet.save()
 
-        return response
+        self.object.save()
+
+        return redirect(self.get_success_url())
