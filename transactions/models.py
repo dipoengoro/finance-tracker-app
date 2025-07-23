@@ -55,3 +55,18 @@ class Budget(models.Model):
 
     def __str__(self):
         return f"Budget for {self.category.name} in {self.month.strftime('%B %Y')}"
+
+class FinancialGoal(models.Model):
+    name = models.CharField(max_length=200)
+    target_amount = models.DecimalField(max_digits=15, decimal_places=2)
+    current_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+    target_date = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def percentage_complete(self):
+        if self.target_amount > 0:
+            return int((self.current_amount / self.target_amount) * 100)
+        return 0
