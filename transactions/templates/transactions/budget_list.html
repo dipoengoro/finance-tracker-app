@@ -10,24 +10,37 @@
 
     <table class="table table-striped table-hover">
         <thead class="table-dark">
-            <tr>
-                <th>Bulan</th>
-                <th>Kategori</th>
-                <th class="text-end">Jumlah Anggaran</th>
-            </tr>
+        <tr>
+            <th>Bulan</th>
+            <th>Kategori</th>
+            <th class="text-end">Anggaran</th>
+            <th class="text-end">Pengeluaran</th>
+            <th class="text-end">Sisa</th>
+            <th style="width: 20%;">Progres</th>
+        </tr>
         </thead>
         <tbody>
-            {% for budget in budgets %}
-                <tr>
-                    <td>{{ budget.month|date:"F Y" }}</td>
-                    <td>{{ budget.category.name }}</td>
-                    <td class="text-end">Rp {{ budget.amount|floatformat:0 }}</td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="3" class="text-center p-4">Belum ada budget yang ditetapkan.</td>
-                </tr>
-            {% endfor %}
+        {% for budget in budgets %}
+            <tr>
+                <td>{{ budget.month|date:"F Y" }}</td>
+                <td>{{ budget.category.name }}</td>
+                <td class="text-end">Rp {{ budget.amount|floatformat:0 }}</td>
+                <td class="text-end">Rp {{ budget.spent|floatformat:0 }}</td>
+                <td class="text-end">Rp {{ budget.remaining|floatformat:0 }}</td>
+                <td>
+                    <div class="progress" role="progressbar">
+                        <div class="progress-bar {% if budget.percentage > 100 %}bg-danger{% elif budget.percentage > 80 %}bg-warning{% else %}bg-success{% endif %}"
+                             style="width: {{ budget.percentage }}%">
+                            {{ budget.percentage }}%
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="6" class="text-center p-4">Belum ada budget yang ditetapkan.</td>
+            </tr>
+        {% endfor %}
         </tbody>
     </table>
 {% endblock %}

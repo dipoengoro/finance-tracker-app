@@ -1,5 +1,7 @@
+from datetime import datetime
 from http.client import responses
 
+from django.db.models import Sum
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views.generic import ListView, UpdateView, CreateView
@@ -8,6 +10,7 @@ from unicodedata import category
 
 from .models import Transaction, Category, Wallet, Payee, Budget
 from decimal import Decimal
+
 
 class TransactionListView(ListView):
     model = Transaction
@@ -21,6 +24,7 @@ class TransactionListView(ListView):
         context['wallets'] = Wallet.objects.all()
         context['payees'] = Payee.objects.all()
         return context
+
 
 def transaction_add(request):
     if request.method == 'POST':
@@ -52,6 +56,7 @@ def transaction_add(request):
 
     return redirect(reverse('transaction_list'))
 
+
 def transaction_delete(request, pk):
     if request.method == 'POST':
         transaction = Transaction.objects.get(pk=pk)
@@ -67,6 +72,7 @@ def transaction_delete(request, pk):
         transaction.delete()
 
     return redirect(reverse('transaction_list'))
+
 
 class TransactionUpdateView(UpdateView):
     model = Transaction
@@ -101,11 +107,36 @@ class TransactionUpdateView(UpdateView):
 
         return redirect(self.get_success_url())
 
+
 class BudgetListView(ListView):
     model = Budget
     template_name = 'transactions/budget_list.html'
     context_object_name = 'budgets'
-    ordering = ['-month', 'category__name']
+
+    def get_queryset(self):
+        today = datetime.today()
+        first_day_of_month = today.replace(day=1)
+        return Budget.objects.filter(month__gte=first_day_of_month).order_by('month', 'category__name')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        budgets = context['budgets']
+
+        for budget in budgets:
+            spent = Transaction.objects.filter(
+                category=budget.category,
+                transaction_type='PENGELUARAN',
+                transaction_date__year=budget.month.year,
+                transaction_date__month=budget.month.month,
+            ).aggregate(total_spent=Sum('amount'))['total_spent'] or Decimal(0)
+
+            budget.spent = spent
+            budget.remaining = budget.amount - spent
+            budget.percentage = int((spent / budget.amount) * 100) if budget.amount > 0 else 0
+
+        context['budgets'] = budgets
+        return context
+
 
 class BudgetCreateView(CreateView):
     model = Budget
