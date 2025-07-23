@@ -2,11 +2,11 @@ from http.client import responses
 
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from django.views.generic import ListView, UpdateView
+from django.views.generic import ListView, UpdateView, CreateView
 from django.urls import reverse_lazy
 from unicodedata import category
 
-from .models import Transaction, Category, Wallet, Payee
+from .models import Transaction, Category, Wallet, Payee, Budget
 from decimal import Decimal
 
 class TransactionListView(ListView):
@@ -100,3 +100,15 @@ class TransactionUpdateView(UpdateView):
         self.object.save()
 
         return redirect(self.get_success_url())
+
+class BudgetListView(ListView):
+    model = Budget
+    template_name = 'transactions/budget_list.html'
+    context_object_name = 'budgets'
+    ordering = ['-month', 'category__name']
+
+class BudgetCreateView(CreateView):
+    model = Budget
+    fields = ['category', 'amount', 'month']
+    template_name = 'transactions/budget_form.html'
+    success_url = reverse_lazy('budget_list')
