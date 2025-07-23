@@ -129,3 +129,53 @@ class TransactionViewTests(TestCase):
 
             self.assertEqual(expense.amount, Decimal('75000'))
             self.assertEqual(self.wallet.balance, Decimal('925000'))
+
+
+class BudgetViewTests(TestCase):
+    def setUp(self):
+        self.category = Category.objects.create(name="Makanan")
+        self.wallet = Wallet.objects.create(name="BCA", balance=Decimal('1000000'))
+        self.payee = Payee.objects.create(name="Supermarket")
+        self.budget_month = date(2025, 7, 1)
+
+    def test_budget_list_view(self):
+        budget = Budget.objects.create(
+            category=self.category,
+            amount=Decimal('500000'),
+            month=self.budget_month
+        )
+
+        Transaction.objects.create(
+            wallet=self.wallet, category=self.category, payee=self.payee,
+            amount=Decimal('100000'), transaction_type='PENGELUARAN',
+            transaction_date=date(2025, 7, 15)
+        )
+
+        Transaction.objects.create(
+            wallet=self.wallet, category=self.category, payee=self.payee,
+            amount=Decimal('50000'), transaction_type='PENGELUARAN',
+            transaction_date=date(2025, 8, 1)
+        )
+
+        response = self.client.get(reverse('budget_list'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'transactions/budget_list.html')
+
+        budget_in_context = response.context['budgets'][0]
+        self.assertEqual(budget_in_context.spent, Decimal('100000'))
+        self.assertEqual(budget_in_context.remaining, Decimal('400000'))
+        self.assertEqual(budget_in_context.percentage, 20)
+
+    def test_budget_create_view(self):
+        form_data = {
+            'category': self.category.pk,
+            'amount': '750000',
+            'month': '2025-08-01',
+        }
+
+        response = self.client.post(reverse('budget_create'), data=form_data)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('budget_list'))
+        self.assertTrue(Budget.objects.filter(amount=750000).exists())
