@@ -8,7 +8,7 @@ from django.views.generic import ListView, UpdateView, CreateView
 from django.urls import reverse_lazy
 from unicodedata import category
 
-from .models import Transaction, Category, Wallet, Payee, Budget
+from .models import Transaction, Category, Wallet, Payee, Budget, FinancialGoal
 from decimal import Decimal
 
 
@@ -143,3 +143,15 @@ class BudgetCreateView(CreateView):
     fields = ['category', 'amount', 'month']
     template_name = 'transactions/budget_form.html'
     success_url = reverse_lazy('budget_list')
+
+class FinancialGoalListView(ListView):
+    model = FinancialGoal
+    template_name = 'transactions/goal_list.html'
+    context_object_name = 'goals'
+    ordering = ['target_date']
+
+class FinancialGoalCreateView(CreateView):
+    model = FinancialGoal
+    fields = ['name', 'target_amount', 'target_date']
+    template_name = 'transactions/goal_form.html'
+    success_url = reverse_lazy('goal_list')

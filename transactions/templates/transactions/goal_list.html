@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Tujuan Finansial{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Tujuan Finansial</h1>
+        <a href="{% url 'goal_create' %}" class="btn btn-primary">Tujuan Baru</a>
+    </div>
+
+    {% for goal in goals %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">{% goal.name %}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">
+                    Target: Rp {{ goal.target_amount|floatformat:0 }}
+                    {% if goal.target_date %}| Jatuh Tempo: {{ goal.target_date|date:"d M Y" }}{% endif %}
+                </h6>
+                <p class="card-text">
+                    Terkumpul: Rp {{ goal.current_amount|floatformat:0 }}
+                </p>
+                <div class="progress" role="progressbar" style="height: 25px;">
+                    <div class="progress-bar bg-success" style="width: {{ goal.percentage_complete }}%">
+                        {{ goal.percentage_complete }}%
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <p>Belum ada tujuan finansial yang ditetapkan.</p>
+    {% endfor %}
+{% endblock %}
