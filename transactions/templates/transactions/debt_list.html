@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Daftar Utang{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Daftar Utang</h1>
+        <a href="{% url 'debt_create' %}" class="btn btn-primary">Tambah Utang</a>
+    </div>
+
+    {% for debt in debts %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Utang kepada: {{ debt.lender_name }}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">
+                    Sisa Utang: Rp {{ debt.current_balance|floatformat:0 }} dari Rp
+                    {{ debt.initial_amount|floatformat:0 }}
+                </h6>
+                {% if debt.due_date %}
+                    <p class="card-text">Jatuh Tempo: {{ debt.due_date|date:"d M Y" }}</p>
+                {% endif %}
+            </div>
+        </div>
+    {% empty %}
+        <p>Tidak ada utang yang tercatat. Bagus!</p>
+    {% endfor %}
+{% endblock %}

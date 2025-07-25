@@ -8,7 +8,7 @@ from django.views.generic import ListView, UpdateView, CreateView
 from django.urls import reverse_lazy
 from unicodedata import category
 
-from .models import Transaction, Category, Wallet, Payee, Budget, FinancialGoal
+from .models import Transaction, Category, Wallet, Payee, Budget, FinancialGoal, Debt
 from decimal import Decimal
 
 
@@ -187,3 +187,15 @@ def add_saving_to_goal(request, pk):
             goal.save()
 
     return redirect(reverse('goal_list'))
+
+class DebtListView(ListView):
+    model = Debt
+    template_name = 'transactions/debt_list.html'
+    context_object_name = 'debts'
+    ordering = ['due_date']
+
+class DebtCreateView(CreateView):
+    model = Debt
+    fields = ['lender_name', 'initial_amount', 'due_date', 'notes']
+    template_name = 'transactions/debt_form.html'
+    success_url = reverse_lazy('debt_list')
