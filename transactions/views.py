@@ -150,8 +150,40 @@ class FinancialGoalListView(ListView):
     context_object_name = 'goals'
     ordering = ['target_date']
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['wallets'] = Wallet.objects.filter(wallet_type='ASET')
+        return context
+
 class FinancialGoalCreateView(CreateView):
     model = FinancialGoal
     fields = ['name', 'target_amount', 'target_date']
     template_name = 'transactions/goal_form.html'
     success_url = reverse_lazy('goal_list')
+
+def add_saving_to_goal(request, pk):
+    goal = FinancialGoal.objects.get(pk=pk)
+    if request.method == 'POST':
+        amount_to_add = Decimal(request.POST.get('amount'))
+        souce_wallet_id = request.POST.get('source_wallet')
+        source_wallet = wallet.objects.get(pk=souce_wallet_id)
+
+        if source_wallet.balance >= amount_to_add:
+            saving_category, _ = Category.objects.get_or_create(name='Tabungan Tujuan')
+
+            Transaction.objects.create(
+                wallet=source_wallet,
+                category=saving_category,
+                amount=amount_to_add,
+                transaction_type='PENGELUARAN',
+                transaction_date=date.today(),
+                notes=f"Menabung untuk {goal.name}"
+            )
+
+            source_wallet.balance -= amount_to_add
+            source_wallet.save()
+
+            goal.current_amount += amount_to_add
+            goal.save()
+
+    return redirect(reverse('goal_list'))

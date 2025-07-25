@@ -11,7 +11,7 @@
     {% for goal in goals %}
         <div class="card mb-3">
             <div class="card-body">
-                <h5 class="card-title">{% goal.name %}</h5>
+                <h5 class="card-title">{{ goal.name }}</h5>
                 <h6 class="card-subtitle mb-2 text-muted">
                     Target: Rp {{ goal.target_amount|floatformat:0 }}
                     {% if goal.target_date %}| Jatuh Tempo: {{ goal.target_date|date:"d M Y" }}{% endif %}
@@ -24,6 +24,26 @@
                         {{ goal.percentage_complete }}%
                     </div>
                 </div>
+
+                <hr>
+                <form action="{% url 'goal_add_savings' goal.pk %}" method="post" class="row g-2 align-items-center">
+                    {% csrf_token %}
+                    <div class="col-auto">
+                        <input type="number" name="amount" class="form-control form-control-sm" placeholder="Jumlah"
+                        required>
+                    </div>
+                    <div class="col-auto">
+                        <select name="source_wallet" class="form-select form-select-sm" required>
+                            <option value="">Dari Dompet...</option>
+                            {% for wallet in wallets %}
+                                <option value="{{ wallet.pk }}">{{ wallet.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-sm btn-outline-success">Tambah Tabungan</button>
+                    </div>
+                </form>
             </div>
         </div>
     {% empty %}
