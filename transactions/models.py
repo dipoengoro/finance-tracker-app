@@ -70,3 +70,20 @@ class FinancialGoal(models.Model):
         if self.target_amount > 0:
             return int((self.current_amount / self.target_amount) * 100)
         return 0
+
+class Debt(models.Model):
+    lender_name = models.CharField(max_length=100)
+    initial_amount = models.DecimalField(max_digits=15, decimal_places=2)
+    current_balance = models.DecimalField(max_digits=15, decimal_places=2)
+    due_date = models.DateField(null=True, blank=True)
+    notes = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Utang kepada {self.lender_name}"
+
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            self.current_balance = self.initial_amount
+        super().save(*args, **kwargs)
+
+
