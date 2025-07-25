@@ -166,7 +166,7 @@ def add_saving_to_goal(request, pk):
     if request.method == 'POST':
         amount_to_add = Decimal(request.POST.get('amount'))
         souce_wallet_id = request.POST.get('source_wallet')
-        source_wallet = wallet.objects.get(pk=souce_wallet_id)
+        source_wallet = Wallet.objects.get(pk=souce_wallet_id)
 
         if source_wallet.balance >= amount_to_add:
             saving_category, _ = Category.objects.get_or_create(name='Tabungan Tujuan')
@@ -176,7 +176,7 @@ def add_saving_to_goal(request, pk):
                 category=saving_category,
                 amount=amount_to_add,
                 transaction_type='PENGELUARAN',
-                transaction_date=date.today(),
+                transaction_date=datetime.today(),
                 notes=f"Menabung untuk {goal.name}"
             )
 
