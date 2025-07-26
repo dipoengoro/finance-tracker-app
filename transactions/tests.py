@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.db.utils import IntegrityError
 from decimal import Decimal
 from datetime import date
-from .models import Category, Wallet, Payee, Transaction, Budget
+from .models import Category, Wallet, Payee, Transaction, Budget, Transfer
 
 
 class ModelTests(TestCase):
@@ -179,3 +179,49 @@ class BudgetViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, reverse('budget_list'))
         self.assertTrue(Budget.objects.filter(amount=750000).exists())
+
+
+class TransferViewTests(TestCase):
+    def setUp(self):
+        self.wallet_from = Wallet.objects.create(name="Mandiri", balance=Decimal('2000000'))
+        self.wallet_to = Wallet.objects.create(name="GoPay", balance=Decimal('500000'))
+
+    def test_transfer_create_view_success(self):
+        form_data = {
+            'from_wallet': self.wallet_from.pk,
+            'to_wallet': self.wallet_to.pk,
+            'amount': '100000',
+            'admin_fee': '2500',
+            'transfer_date': date.today().strftime('%Y-%m-%d'),
+        }
+
+        response = self.client.post(reverse('transfer_create'), data=form_data)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('transfer_list'))
+
+        self.assertTrue(Transfer.objects.filter(amount=100000).exists())
+
+        self.wallet_from.refresh_from_db()
+        self.wallet_to.refresh_from_db()
+        self.assertEqual(self.wallet_from.balance, Decimal('1897500'))  # 2.000.000 - 100.000 - 2.500
+        self.assertEqual(self.wallet_to.balance, Decimal('600000'))  # 500.000 + 100.000
+
+    def test_transfer_insufficient_funds(self):
+        initial_transfer_count = Transfer.objects.count()
+
+        form_data = {
+            'from_wallet': self.wallet_from.pk,
+            'to_wallet': self.wallet_to.pk,
+            'amount': '3000000',  # Melebihi saldo
+            'transfer_date': date.today().strftime('%Y-%m-%d'),
+        }
+
+        self.client.post(reverse('transfer_create'), data=form_data)
+
+        self.assertEqual(Transfer.objects.count(), initial_transfer_count)
+
+        self.wallet_from.refresh_from_db()
+        self.wallet_to.refresh_from_db()
+        self.assertEqual(self.wallet_from.balance, Decimal('2000000'))
+        self.assertEqual(self.wallet_to.balance, Decimal('500000'))
