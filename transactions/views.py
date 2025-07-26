@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from http.client import responses
 
@@ -298,11 +299,21 @@ def dashboard_view(request):
         transaction_date__month=first_day_of_month.month
     ).aggregate(total=Sum('amount'))['total'] or 0
 
+    expense_by_category = Transaction.objects.filter(
+        transaction_type='PENGELUARAN',
+        transaction_date__gte=first_day_of_month
+    ).values('category__name').annotate(total=Sum('amount')).order_by('-total')
+
+    chart_labels = [item['category__name'] for item in expense_by_category]
+    chart_data = [float(item['total']) for item in expense_by_category]
+
     context = {
         'total_assets': total_assets,
         'total_liabilities': total_liabilities,
         'net_worth': total_assets - total_liabilities,
         'income_this_month': income_this_month,
         'expense_this_month': expense_this_month,
+        'chart_labels': json.dumps(chart_labels),
+        'chart_data': json.dumps(chart_data),
     }
     return render(request, 'transactions/dashboard.html', context)
