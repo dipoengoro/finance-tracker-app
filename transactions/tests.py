@@ -38,6 +38,35 @@ class ModelTests(TestCase):
         with self.assertRaises(IntegrityError):
             Budget.objects.create(category=category, amount=Decimal('250000.00'), month=month)
 
+    def test_create_payee(self):
+        payee = Payee.objects.create(name="Toko Kelontong")
+        self.assertEqual(str(payee), "Toko Kelontong")
+
+    def test_create_transaction(self):
+        wallet = Wallet.objects.create(name="OVO")
+        payee = Payee.objects.create(name="GoFood")
+        transaction = Transaction.objects.create(
+            wallet=wallet,
+            payee=payee,
+            amount=Decimal('35000'),
+            transaction_type='PENGELUARAN',
+            transaction_date=date.today()
+        )
+        expected_str = f"GoFood - 35000"
+        self.assertEqual(str(transaction), expected_str)
+
+    def test_create_transfer(self):
+        wallet_from = Wallet.objects.create(name="Jenius")
+        wallet_to = Wallet.objects.create(name="Dana")
+        transfer = Transfer.objects.create(
+            from_wallet=wallet_from,
+            to_wallet=wallet_to,
+            amount=Decimal('100000'),
+            transfer_date=date.today()
+        )
+        expected_str = "Transfer from Jenius to Dana"
+        self.assertEqual(str(transfer), expected_str)
+
 
 class TransactionViewTests(TestCase):
     def setUp(self):
