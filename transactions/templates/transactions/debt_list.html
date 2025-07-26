@@ -19,6 +19,30 @@
                 {% if debt.due_date %}
                     <p class="card-text">Jatuh Tempo: {{ debt.due_date|date:"d M Y" }}</p>
                 {% endif %}
+
+                {% if debt.current_balance > 0 %}
+                <hr>
+                <form action="{% url 'pay_debt' debt.pk %}" method="post" class="row g-2 align-items-center">
+                    {% csrf_token %}
+                    <div class="col-auto">
+                        <input type="number" name="amount" class="form-control form-control-sm"
+                               placeholder="Jumlah Bayar" required>
+                    </div>
+                    <div class="col-auto">
+                        <select name="source_wallet" class="form-select form-select-sm" required>
+                            <option value="">Dari Dompet...</option>
+                            {% for wallet in wallets %}
+                                <option value="{{ wallet.pk }}">{{ wallet.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-outline-success btn-sm">Bayar</button>
+                    </div>
+                </form>
+                {% else %}
+                <p class="text-success fw-bold mt-3">LUNAS</p>
+                {% endif %}
             </div>
         </div>
     {% empty %}

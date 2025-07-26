@@ -2,6 +2,7 @@ from datetime import datetime
 from http.client import responses
 
 from django.db.models import Sum
+from django.db.models.fields import return_None
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views.generic import ListView, UpdateView, CreateView
@@ -194,8 +195,42 @@ class DebtListView(ListView):
     context_object_name = 'debts'
     ordering = ['due_date']
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['wallets'] = Wallet.objects.filter(wallet_type='ASET')
+        return context
+
 class DebtCreateView(CreateView):
     model = Debt
     fields = ['lender_name', 'initial_amount', 'due_date', 'notes']
     template_name = 'transactions/debt_form.html'
     success_url = reverse_lazy('debt_list')
+
+def pay_debt(request, pk):
+    debt = Debt.objects.get(pk=pk)
+    if request.method == 'POST':
+        amount_to_pay = Decimal(request.POST.get('amount'))
+        souce_wallet_id = request.POST.get('source_wallet')
+        source_wallet = Wallet.objects.get(pk=souce_wallet_id)
+
+        if source_wallet.balance >= amount_to_pay:
+            debt_category, _ = Category.objects.get_or_create(name='Pembayaran Utang')
+            payee, _ = Payee.objects.get_or_create(name=debt.lender_name)
+
+            Transaction.objects.create(
+                wallet=source_wallet,
+                category=debt_category,
+                payee=payee,
+                amount=amount_to_pay,
+                transaction_type='PENGELUARAN',
+                transaction_date=datetime.today(),
+                notes=f"Pembayaran utang kepada {debt.lender_name}"
+            )
+
+            source_wallet.balance -= amount_to_pay
+            source_wallet.save()
+
+            debt.current_balance -= amount_to_pay
+            debt.save()
+
+    return redirect(reverse('debt_list'))

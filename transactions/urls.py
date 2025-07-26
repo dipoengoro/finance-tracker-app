@@ -13,4 +13,5 @@ urlpatterns = [
     path('goals/<int:pk>/add_savings', views.add_saving_to_goal, name='goal_add_savings'),
     path('debts/', views.DebtListView.as_view(), name='debt_list'),
     path('debts/add/', views.DebtCreateView.as_view(), name='debt_create'),
+    path('debts/<int:pk>/pay/', views.pay_debt, name='pay_debt'),
 ]
