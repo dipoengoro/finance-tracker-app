@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import date
 from decimal import Decimal
 
 from django.contrib import messages
@@ -7,10 +7,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Sum
 from django.shortcuts import render, redirect
-from django.urls import reverse
-from django.urls import reverse_lazy
-from django.utils import timezone
-from django.views.generic import ListView, UpdateView, CreateView
+from django.urls import reverse, reverse_lazy
+from django.views.generic import ListView, CreateView, UpdateView
 
 from .models import Transaction, Category, Wallet, Payee, Budget, FinancialGoal, Debt, Transfer
 
@@ -25,15 +23,17 @@ class TransactionListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['categories'] = Category.objects.all()
-        context['wallets'] = Wallet.objects.all()
-        context['payees'] = Payee.objects.all()
+        user = self.request.user
+        context['categories'] = Category.objects.filter(user=user)
+        context['wallets'] = Wallet.objects.filter(user=user)
+        context['payees'] = Payee.objects.filter(user=user)
         return context
 
 
 @login_required
 def transaction_add(request):
     if request.method == 'POST':
+        user = request.user
         wallet_id = request.POST.get('wallet')
         payee_name = request.POST.get('payee')
         category_name = request.POST.get('category')
@@ -41,12 +41,12 @@ def transaction_add(request):
         trans_type = request.POST.get('transaction_type')
         trans_date = request.POST.get('transaction_date')
 
-        wallet = Wallet.objects.get(pk=wallet_id)
-        category, _ = Category.objects.get_or_create(name=category_name)
-        payee, _ = Payee.objects.get_or_create(name=payee_name)
+        wallet = Wallet.objects.get(pk=wallet_id, user=user)
+        category, _ = Category.objects.get_or_create(name=category_name, user=user)
+        payee, _ = Payee.objects.get_or_create(name=payee_name, user=user)
 
-        Transaction.objects.create(user=request.user, wallet=wallet, payee=payee, category=category, amount=amount,
-            transaction_type=trans_type, transaction_date=trans_date, )
+        Transaction.objects.create(user=user, wallet=wallet, payee=payee, category=category, amount=amount,
+                                   transaction_type=trans_type, transaction_date=trans_date, )
 
         if trans_type == 'PENGELUARAN':
             wallet.balance -= amount
@@ -57,9 +57,11 @@ def transaction_add(request):
     return redirect(reverse('transaction_list'))
 
 
+@login_required
 def transaction_delete(request, pk):
     if request.method == 'POST':
-        transaction = Transaction.objects.get(pk=pk)
+        user = request.user
+        transaction = Transaction.objects.get(pk=pk, user=user)
         wallet = transaction.wallet
         amount = transaction.amount
 
@@ -74,10 +76,13 @@ def transaction_delete(request, pk):
     return redirect(reverse('transaction_list'))
 
 
-class TransactionUpdateView(UpdateView):
+class TransactionUpdateView(LoginRequiredMixin, UpdateView):
     model = Transaction
     fields = ['transaction_date', 'wallet', 'category', 'payee', 'amount', 'admin_fee', 'transaction_type', 'notes']
     template_name = 'transactions/transaction_form.html'
+
+    def get_queryset(self):
+        return Transaction.objects.filter(user=self.request.user)
 
     def get_success_url(self):
         return reverse_lazy('transaction_list')
@@ -108,23 +113,24 @@ class TransactionUpdateView(UpdateView):
         return redirect(self.get_success_url())
 
 
-class BudgetListView(ListView):
+class BudgetListView(LoginRequiredMixin, ListView):
     model = Budget
     template_name = 'transactions/budget_list.html'
     context_object_name = 'budgets'
 
     def get_queryset(self):
-        today = datetime.today()
+        today = date.today()
         first_day_of_month = today.replace(day=1)
-        return Budget.objects.filter(month__gte=first_day_of_month).order_by('month', 'category__name')
+        return Budget.objects.filter(user=self.request.user, month__gte=first_day_of_month).order_by('month',
+                                                                                                     'category__name')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         budgets = context['budgets']
 
         for budget in budgets:
-            spent = Transaction.objects.filter(category=budget.category, transaction_type='PENGELUARAN',
-                                               transaction_date__year=budget.month.year,
+            spent = Transaction.objects.filter(user=self.request.user, category=budget.category,
+                                               transaction_type='PENGELUARAN', transaction_date__year=budget.month.year,
                                                transaction_date__month=budget.month.month, ).aggregate(
                 total_spent=Sum('amount'))['total_spent'] or Decimal(0)
 
@@ -136,43 +142,59 @@ class BudgetListView(ListView):
         return context
 
 
-class BudgetCreateView(CreateView):
+class BudgetCreateView(LoginRequiredMixin, CreateView):
     model = Budget
     fields = ['category', 'amount', 'month']
     template_name = 'transactions/budget_form.html'
     success_url = reverse_lazy('budget_list')
 
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super().form_valid(form)
 
-class FinancialGoalListView(ListView):
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        form.fields['category'].queryset = Category.objects.filter(user=self.request.user)
+        return form
+
+
+class FinancialGoalListView(LoginRequiredMixin, ListView):
     model = FinancialGoal
     template_name = 'transactions/goal_list.html'
     context_object_name = 'goals'
-    ordering = ['target_date']
+
+    def get_queryset(self):
+        return FinancialGoal.objects.filter(user=self.request.user).order_by('target_date')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['wallets'] = Wallet.objects.filter(wallet_type='ASET')
+        context['wallets'] = Wallet.objects.filter(wallet_type='ASET', user=self.request.user)
         return context
 
 
-class FinancialGoalCreateView(CreateView):
+class FinancialGoalCreateView(LoginRequiredMixin, CreateView):
     model = FinancialGoal
     fields = ['name', 'target_amount', 'target_date']
     template_name = 'transactions/goal_form.html'
     success_url = reverse_lazy('goal_list')
 
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super().form_valid(form)
 
+@login_required
 def add_saving_to_goal(request, pk):
-    goal = FinancialGoal.objects.get(pk=pk)
+    user = request.user
+    goal = FinancialGoal.objects.get(pk=pk, user=user)
     if request.method == 'POST':
         amount_to_add = Decimal(request.POST.get('amount'))
         souce_wallet_id = request.POST.get('source_wallet')
-        source_wallet = Wallet.objects.get(pk=souce_wallet_id)
+        source_wallet = Wallet.objects.get(pk=souce_wallet_id, user=user)
 
         if source_wallet.balance >= amount_to_add:
-            saving_category, _ = Category.objects.get_or_create(name='Tabungan Tujuan')
+            saving_category, _ = Category.objects.get_or_create(name='Tabungan Tujuan', user=user)
 
-            Transaction.objects.create(wallet=source_wallet, category=saving_category, amount=amount_to_add,
+            Transaction.objects.create(user=user, wallet=source_wallet, category=saving_category, amount=amount_to_add,
                                        transaction_type='PENGELUARAN', transaction_date=datetime.today(),
                                        notes=f"Menabung untuk {goal.name}")
 
@@ -185,38 +207,46 @@ def add_saving_to_goal(request, pk):
     return redirect(reverse('goal_list'))
 
 
-class DebtListView(ListView):
+class DebtListView(LoginRequiredMixin, ListView):
     model = Debt
     template_name = 'transactions/debt_list.html'
     context_object_name = 'debts'
-    ordering = ['due_date']
+
+    def get_queryset(self):
+        return Debt.objects.filter(user=self.request.user).order_by('due_date')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['wallets'] = Wallet.objects.filter(wallet_type='ASET')
+        context['wallets'] = Wallet.objects.filter(wallet_type='ASET', user=self.request.user)
         return context
 
 
-class DebtCreateView(CreateView):
+class DebtCreateView(LoginRequiredMixin, CreateView):
     model = Debt
     fields = ['lender_name', 'initial_amount', 'due_date', 'notes']
     template_name = 'transactions/debt_form.html'
     success_url = reverse_lazy('debt_list')
 
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super().form_valid(form)
 
+@login_required
 def pay_debt(request, pk):
-    debt = Debt.objects.get(pk=pk)
+    user = request.user
+    debt = Debt.objects.get(pk=pk, user=user)
     if request.method == 'POST':
         amount_to_pay = Decimal(request.POST.get('amount'))
         souce_wallet_id = request.POST.get('source_wallet')
-        source_wallet = Wallet.objects.get(pk=souce_wallet_id)
+        source_wallet = Wallet.objects.get(pk=souce_wallet_id, user=user)
 
         if source_wallet.balance >= amount_to_pay:
-            debt_category, _ = Category.objects.get_or_create(name='Pembayaran Utang')
-            payee, _ = Payee.objects.get_or_create(name=debt.lender_name)
+            debt_category, _ = Category.objects.get_or_create(name='Pembayaran Utang', user=user)
+            payee, _ = Payee.objects.get_or_create(name=debt.lender_name, user=user)
 
-            Transaction.objects.create(wallet=source_wallet, category=debt_category, payee=payee, amount=amount_to_pay,
-                                       transaction_type='PENGELUARAN', transaction_date=datetime.today(),
+            Transaction.objects.create(user=user, wallet=source_wallet, category=debt_category, payee=payee,
+                                       amount=amount_to_pay, transaction_type='PENGELUARAN',
+                                       transaction_date=datetime.today(),
                                        notes=f"Pembayaran utang kepada {debt.lender_name}")
 
             source_wallet.balance -= amount_to_pay
@@ -228,20 +258,23 @@ def pay_debt(request, pk):
     return redirect(reverse('debt_list'))
 
 
-class TransferListView(ListView):
+class TransferListView(LoginRequiredMixin, ListView):
     model = Transfer
     template_name = 'transactions/transfer_list.html'
     context_object_name = 'transfers'
-    ordering = ['-transfer_date']
+
+    def get_queryset(self):
+        return Transfer.objects.filter(user=self.request.user).order_by('-transfer_date')
 
 
-class TransferCreateView(CreateView):
+class TransferCreateView(LoginRequiredMixin, CreateView):
     model = Transfer
     fields = ['from_wallet', 'to_wallet', 'amount', 'admin_fee', 'transfer_date', 'notes']
     template_name = 'transactions/transfer_form.html'
     success_url = reverse_lazy('transfer_list')
 
     def form_valid(self, form):
+        form.instance.user = self.request.user
         transfer = form.save(commit=False)
         from_wallet = transfer.from_wallet
         to_wallet = transfer.to_wallet
@@ -265,31 +298,40 @@ class TransferCreateView(CreateView):
         transfer.save()
         return super().form_valid(form)
 
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        user_wallets = Wallet.objects.filter(user=self.request.user)
+        form.fields['from_wallet'].queryset = user_wallets
+        form.fields['to_wallet'].queryset = user_wallets
+        return form
 
+
+@login_required
 def dashboard_view(request):
-    latest_transaction = Transaction.objects.order_by('-transaction_date').first()
+    user = request.user
+    latest_transaction = Transaction.objects.filter(user=user).order_by('-transaction_date').first()
 
     if latest_transaction:
         relevant_date = latest_transaction.transaction_date
     else:
-        relevant_date = timezone.now().date()
+        relevant_date = date.today()
 
     first_day_of_month = relevant_date.replace(day=1)
 
-    total_assets = Wallet.objects.filter(wallet_type='ASET').aggregate(total=Sum('balance'))['total'] or 0
-    total_liabilities = Debt.objects.aggregate(total=Sum('current_balance'))['total'] or 0
+    total_assets = Wallet.objects.filter(user=user, wallet_type='ASET').aggregate(total=Sum('balance'))['total'] or 0
+    total_liabilities = Debt.objects.filter(user=user).aggregate(total=Sum('current_balance'))['total'] or 0
 
     income_this_month = \
-        Transaction.objects.filter(transaction_type='PEMASUKAN', transaction_date__gte=first_day_of_month,
+        Transaction.objects.filter(user=user, transaction_type='PEMASUKAN', transaction_date__gte=first_day_of_month,
                                    transaction_date__month=first_day_of_month.month).aggregate(total=Sum('amount'))[
             'total'] or 0
 
     expense_this_month = \
-        Transaction.objects.filter(transaction_type='PENGELUARAN', transaction_date__gte=first_day_of_month,
+        Transaction.objects.filter(user=user, transaction_type='PENGELUARAN', transaction_date__gte=first_day_of_month,
                                    transaction_date__month=first_day_of_month.month).aggregate(total=Sum('amount'))[
             'total'] or 0
 
-    expense_by_category = Transaction.objects.filter(transaction_type='PENGELUARAN',
+    expense_by_category = Transaction.objects.filter(user=user, transaction_type='PENGELUARAN',
                                                      transaction_date__gte=first_day_of_month).values(
         'category__name').annotate(total=Sum('amount')).order_by('-total')
 
