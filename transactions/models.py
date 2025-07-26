@@ -1,6 +1,8 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Category(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True, null=True)
 
@@ -8,6 +10,7 @@ class Category(models.Model):
         return self.name
 
 class Wallet(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     class WalletType(models.TextChoices):
         ASSET = 'ASET', 'Aset'
         LIABILITY = 'LIABILITAS', 'Liabilitas'
@@ -21,6 +24,7 @@ class Wallet(models.Model):
 
 
 class Payee(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
@@ -28,6 +32,7 @@ class Payee(models.Model):
 
 
 class Transaction(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     class TransactionType(models.TextChoices):
         INCOME = 'PEMASUKAN', 'Pemasukan'
         EXPENSE = 'PENGELUARAN', 'Pengeluaran'
@@ -46,6 +51,7 @@ class Transaction(models.Model):
         return f"{self.payee} - {self.amount}"
 
 class Budget(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='budgets')
     amount = models.DecimalField(max_digits=15, decimal_places=2)
     month = models.DateField()
@@ -57,6 +63,7 @@ class Budget(models.Model):
         return f"Budget for {self.category.name} in {self.month.strftime('%B %Y')}"
 
 class FinancialGoal(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
     target_amount = models.DecimalField(max_digits=15, decimal_places=2)
     current_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
@@ -72,6 +79,7 @@ class FinancialGoal(models.Model):
         return 0
 
 class Debt(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     lender_name = models.CharField(max_length=100)
     initial_amount = models.DecimalField(max_digits=15, decimal_places=2)
     current_balance = models.DecimalField(max_digits=15, decimal_places=2)
@@ -87,6 +95,7 @@ class Debt(models.Model):
         super().save(*args, **kwargs)
 
 class Transfer(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     from_wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='transfers_out')
     to_wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='transfers_in')
     amount = models.DecimalField(max_digits=15, decimal_places=2)
