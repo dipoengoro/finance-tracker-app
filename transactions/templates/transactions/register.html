@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}Daftar Akun Baru{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">Daftar Akun Baru</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Daftar</button>
+    </form>
+{% endblock %}
