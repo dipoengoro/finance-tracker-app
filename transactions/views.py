@@ -1,7 +1,7 @@
 from datetime import datetime
 from http.client import responses
 
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.db.models.fields import return_None
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -11,6 +11,7 @@ from unicodedata import category
 
 from .models import Transaction, Category, Wallet, Payee, Budget, FinancialGoal, Debt, Transfer
 from django.contrib import messages
+from django.utils import timezone
 from decimal import Decimal
 
 
@@ -271,3 +272,37 @@ class TransferCreateView(CreateView):
 
         transfer.save()
         return super().form_valid(form)
+
+def dashboard_view(request):
+    latest_transaction = Transaction.objects.order_by('-transaction_date').first()
+
+    if latest_transaction:
+        relevant_date = latest_transaction.transaction_date
+    else:
+        relevant_date = timezone.now().date()
+
+    first_day_of_month = relevant_date.replace(day=1)
+
+    total_assets = Wallet.objects.filter(wallet_type='ASET').aggregate(total=Sum('balance'))['total'] or 0
+    total_liabilities = Debt.objects.aggregate(total=Sum('current_balance'))['total'] or 0
+
+    income_this_month = Transaction.objects.filter(
+        transaction_type='PEMASUKAN',
+        transaction_date__gte=first_day_of_month,
+        transaction_date__month=first_day_of_month.month
+    ).aggregate(total=Sum('amount'))['total'] or 0
+
+    expense_this_month = Transaction.objects.filter(
+        transaction_type='PENGELUARAN',
+        transaction_date__gte=first_day_of_month,
+        transaction_date__month=first_day_of_month.month
+    ).aggregate(total=Sum('amount'))['total'] or 0
+
+    context = {
+        'total_assets': total_assets,
+        'total_liabilities': total_liabilities,
+        'net_worth': total_assets - total_liabilities,
+        'income_this_month': income_this_month,
+        'expense_this_month': expense_this_month,
+    }
+    return render(request, 'transactions/dashboard.html', context)

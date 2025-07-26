@@ -16,4 +16,5 @@ urlpatterns = [
     path('debts/<int:pk>/pay/', views.pay_debt, name='pay_debt'),
     path('transfers/', views.TransferListView.as_view(), name='transfer_list'),
     path('transfers/add/', views.TransferCreateView.as_view(), name='transfer_create'),
+    path('dashboard/', views.dashboard_view, name='dashboard'),
 ]
