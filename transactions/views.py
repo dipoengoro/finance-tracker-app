@@ -9,7 +9,8 @@ from django.views.generic import ListView, UpdateView, CreateView
 from django.urls import reverse_lazy
 from unicodedata import category
 
-from .models import Transaction, Category, Wallet, Payee, Budget, FinancialGoal, Debt
+from .models import Transaction, Category, Wallet, Payee, Budget, FinancialGoal, Debt, Transfer
+from django.contrib import messages
 from decimal import Decimal
 
 
@@ -234,3 +235,39 @@ def pay_debt(request, pk):
             debt.save()
 
     return redirect(reverse('debt_list'))
+
+class TransferListView(ListView):
+    model = Transfer
+    template_name = 'transactions/transfer_list.html'
+    context_object_name = 'transfers'
+    ordering = ['-transfer_date']
+
+class TransferCreateView(CreateView):
+    model = Transfer
+    fields = ['from_wallet', 'to_wallet', 'amount', 'admin_fee', 'transfer_date', 'notes']
+    template_name = 'transactions/transfer_form.html'
+    success_url = reverse_lazy('transfer_list')
+
+    def form_valid(self, form):
+        transfer = form.save(commit=False)
+        from_wallet = transfer.from_wallet
+        to_wallet = transfer.to_wallet
+        amount = transfer.amount
+        admin_fee = transfer.admin_fee
+
+        if from_wallet == to_wallet:
+            messages.error(self.request, "Dompet asal dan tujuan tidak boleh sama.")
+            return self.form_invalid(form)
+
+        if from_wallet.balance < (amount + admin_fee):
+            messages.error(self.request, f"Saldo di {from_wallet.name} tidak mencukupi.")
+            return self.form_invalid(form)
+
+        from_wallet.balance -= (amount + admin_fee)
+        to_wallet.balance += amount
+
+        from_wallet.save()
+        to_wallet.save()
+
+        transfer.save()
+        return super().form_valid(form)

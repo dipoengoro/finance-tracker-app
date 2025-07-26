@@ -23,11 +23,22 @@
                     <li class="nav-item">
                         <a href="{% url 'debt_list' %}" class="nav-link">Utang</a>
                     </li>
+                    <li class="nav-item">
+                        <a href="{% url 'transfer_list' %}" class="nav-link">Transfer</a>
+                    </li>
                 </ul>
             </div>
         </div>
     </nav>
     <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} mt-3" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
         {% block content %}{% endblock %}
     </div>
     <script src="{% static 'script.js' %}"></script>
