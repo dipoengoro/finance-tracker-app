@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
@@ -23,13 +23,16 @@ class TransactionListView(LoginRequiredMixin, ListView):
     context_object_name = 'transactions'
 
     def get_queryset(self):
-        return Transaction.objects.filter(user=self.request.user).order_by('-transaction_date')
+        user = self.request.user
+        return (Transaction.objects.filter(Q(user=user) | Q(wallet__shared_with=user)).distinct().order_by(
+            '-transaction_date'))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         context['categories'] = Category.objects.filter(user=user)
-        context['wallets'] = Wallet.objects.filter(user=user)
+        accessible_wallets = Wallet.objects.filter(Q(user=user) | Q(shared_with=user)).distinct()
+        context['wallets'] = accessible_wallets
         context['payees'] = Payee.objects.filter(user=user)
         return context
 
@@ -207,9 +210,10 @@ class BudgetListView(LoginRequiredMixin, ListView):
         budgets = context['budgets']
 
         for budget in budgets:
-            spent = Transaction.objects.filter(user=self.request.user, category=budget.category,
-                                               transaction_type='PENGELUARAN', transaction_date__year=budget.month.year,
-                                               transaction_date__month=budget.month.month, ).aggregate(
+            spent = \
+            Transaction.objects.filter(user=self.request.user, category=budget.category, transaction_type='PENGELUARAN',
+                                       transaction_date__year=budget.month.year,
+                                       transaction_date__month=budget.month.month, ).aggregate(
                 total_spent=Sum('amount'))['total_spent'] or Decimal(0)
 
             budget.spent = spent
@@ -507,6 +511,7 @@ class CategoryDeleteView(LoginRequiredMixin, DeleteView):
     def get_queryset(self):
         return Category.objects.filter(user=self.request.user)
 
+
 class PayeeListView(LoginRequiredMixin, ListView):
     model = Payee
     template_name = 'transactions/payee_list.html'
@@ -514,6 +519,7 @@ class PayeeListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return Payee.objects.filter(user=self.request.user)
+
 
 class PayeeCreateView(LoginRequiredMixin, CreateView):
     model = Payee
@@ -525,6 +531,7 @@ class PayeeCreateView(LoginRequiredMixin, CreateView):
         form.instance.user = self.request.user
         return super().form_valid(form)
 
+
 class PayeeUpdateView(LoginRequiredMixin, UpdateView):
     model = Payee
     fields = ['name']
@@ -533,6 +540,7 @@ class PayeeUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_queryset(self):
         return Payee.objects.filter(user=self.request.user)
+
 
 class PayeeDeleteView(LoginRequiredMixin, DeleteView):
     model = Payee
