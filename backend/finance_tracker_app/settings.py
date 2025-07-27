@@ -139,3 +139,7 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
 ]
+
+ALLOWED_HOSTS = [
+    "https://dipoengoro-q3bno.ondigitalocean.app/"
+]
