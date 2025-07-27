@@ -30,4 +30,5 @@ urlpatterns = [path('', views.TransactionListView.as_view(), name='transaction_l
                path('payees/', views.PayeeListView.as_view(), name='payee_list'),
                path('payees/add/', views.PayeeCreateView.as_view(), name='payee_create'),
                path('payees/update/<int:pk>/', views.PayeeUpdateView.as_view(), name='payee_update'),
-               path('payees/delete/<int:pk>/', views.PayeeDeleteView.as_view(), name='payee_delete'), ]
+               path('payees/delete/<int:pk>/', views.PayeeDeleteView.as_view(), name='payee_delete'),
+               path('<int:pk>/details/', views.TransactionDetailView.as_view(), name='transaction_detail'),]

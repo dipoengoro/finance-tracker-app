@@ -12,10 +12,10 @@ from django.db.models import Sum, Q
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, View
 
-from .forms import WalletUpdateForm
-from .models import Transaction, Category, Wallet, Payee, Budget, FinancialGoal, Debt, Transfer
+from .forms import WalletUpdateForm, PurchaseItemForm
+from .models import Transaction, Category, Wallet, Payee, Budget, FinancialGoal, Debt, Transfer, Product
 
 
 class TransactionListView(LoginRequiredMixin, ListView):
@@ -552,3 +552,37 @@ class PayeeDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_queryset(self):
         return Payee.objects.filter(user=self.request.user)
+
+
+class TransactionDetailView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        transaction = Transaction.objects.get(pk=pk, user=request.user)
+        form = PurchaseItemForm()
+        context = {
+            'transaction': transaction,
+            'form': form
+        }
+        return render(request, 'transactions/transaction_detail.html', context)
+
+    def post(self, request, pk):
+        transaction = Transaction.objects.get(pk=pk, user=request.user)
+        form = PurchaseItemForm(request.POST)
+
+        if form.is_valid():
+            product_name = form.cleaned_data['product_name']
+
+            product, _ = Product.objects.get_or_create(
+                name=product_name,
+                user=request.user,
+                defaults={'category': transaction.category}  # Gunakan kategori transaksi sbg default
+            )
+
+            PurchaseItem.objects.create(
+                user=request.user,
+                transaction=transaction,
+                product=product,
+                quantity=form.cleaned_data['quantity'],
+                price=form.cleaned_data['price']
+            )
+
+        return redirect(reverse('transaction_detail', kwargs={'pk': pk}))

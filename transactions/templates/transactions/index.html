@@ -78,6 +78,7 @@
                     <td>{{ tx.category.name|default:"-" }}</td>
                     <td class="text-end">Rp {{ tx.amount|floatformat:0 }}</td>
                     <td class="text-center">
+                        <a href="{% url 'transaction_detail' tx.pk %}" class="btn btn-sm btn-outline-info">Rincian</a>
                         <a href="{% url 'transaction_update' tx.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
                         <form action="{% url 'transaction_delete' tx.pk %}" method="post" class="d-inline">
                             {% csrf_token %}

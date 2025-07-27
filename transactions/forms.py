@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Wallet
+from .models import Wallet, PurchaseItem
 
 class WalletUpdateForm(forms.ModelForm):
     shared_with = forms.ModelMultipleChoiceField(
@@ -18,3 +18,10 @@ class WalletUpdateForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.user:
             self.fields['shared_with'].queryset = User.objects.exclude(pk=self.user.pk)
+
+class PurchaseItemForm(forms.ModelForm):
+    product_name = forms.CharField(label="Nama Produk", max_length=200)
+
+    class Meta:
+        model = PurchaseItem
+        fields = ['product_name', 'quantity', 'price']
