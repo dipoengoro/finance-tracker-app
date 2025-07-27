@@ -252,3 +252,34 @@ class WalletViewTests(BaseViewTest):
         response = self.client.post(reverse('wallet_delete', kwargs={'pk': self.wallet.pk}))
         self.assertRedirects(response, reverse('wallet_list'))
         self.assertFalse(Wallet.objects.filter(pk=self.wallet.pk).exists())
+
+class CategoryViewTests(BaseViewTest):
+    def setUp(self):
+        super().setUp()
+        self.category = Category.objects.create(name="Test Kategori", user=self.user)
+
+    def test_category_list_view(self):
+        response = self.client.get(reverse('category_list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Test Kategori")
+
+    def test_category_create_view(self):
+        response = self.client.post(reverse('category_create'), {'name': 'Kategori Baru'})
+        self.assertRedirects(response, reverse('category_list'))
+        self.assertTrue(Category.objects.filter(name='Kategori Baru').exists())
+
+
+class PayeeViewTests(BaseViewTest):
+    def setUp(self):
+        super().setUp()
+        self.payee = Payee.objects.create(name="Test Penerima", user=self.user)
+
+    def test_payee_list_view(self):
+        response = self.client.get(reverse('payee_list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Test Penerima")
+
+    def test_payee_create_view(self):
+        response = self.client.post(reverse('payee_create'), {'name': 'Penerima Baru'})
+        self.assertRedirects(response, reverse('payee_list'))
+        self.assertTrue(Payee.objects.filter(name='Penerima Baru').exists())
