@@ -16,3 +16,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+function toggleItemEdit(itemId) {
+    const viewRow = document.getElementById('item-view-' + itemId);
+    const editRow = document.getElementById('item-edit-' + itemId);
+
+    if (viewRow.style.display !== 'none') {
+        viewRow.style.display = 'none';
+        editRow.style.display = 'table-row';
+    } else {
+        viewRow.style.display = 'table-row';
+        editRow.style.display = 'none';
+    }
+}
