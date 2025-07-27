@@ -17,4 +17,5 @@ urlpatterns = [
     path('transfers/', views.TransferListView.as_view(), name='transfer_list'),
     path('transfers/add/', views.TransferCreateView.as_view(), name='transfer_create'),
     path('dashboard/', views.dashboard_view, name='dashboard'),
+    path('export/', views.export_transactions, name='transaction_export'),
 ]

@@ -1,4 +1,5 @@
 import json
+import csv
 from datetime import date
 from decimal import Decimal
 
@@ -6,6 +7,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Sum
+from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView
@@ -343,3 +345,28 @@ def dashboard_view(request):
                'expense_this_month': expense_this_month, 'chart_labels': json.dumps(chart_labels),
                'chart_data': json.dumps(chart_data), }
     return render(request, 'transactions/dashboard.html', context)
+
+
+@login_required
+def export_transactions(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="transaksi.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Tanggal', 'Tipe', 'Penerima/Tujuan', 'Kategori', 'Jumlah', 'Biaya Admin', 'Dompet', 'Catatan'])
+
+    transactions = Transaction.objects.filter(user=request.user).order_by('transaction_date')
+
+    for tx in transactions:
+        writer.writerow([
+            tx.transaction_date,
+            tx.get_transaction_type_display(),
+            tx.payee.name if tx.payee else '',
+            tx.category.name if tx.category else '',
+            tx.amount,
+            tx.admin_fee,
+            tx.wallet.name,
+            tx.notes
+        ])
+
+    return response

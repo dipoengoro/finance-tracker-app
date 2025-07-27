@@ -3,7 +3,10 @@
 {% block title %}Daftar Transaksi{% endblock %}
 
 {% block content %}
-    <h1 class="mb-4">Daftar Transaksi</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Daftar Transaksi</h1>
+        <a href="{% url 'transaction_export' %}" class="btn btn-secondary">Ekspor ke CSV</a>
+    </div>
 
     <form action="{% url 'transaction_add' %}" method="post" class="mb-5 p-4 bg-light rounded border">
         {% csrf_token %}
