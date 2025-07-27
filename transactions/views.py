@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q, F
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
@@ -569,15 +569,12 @@ class TransactionDetailView(LoginRequiredMixin, View):
         form = PurchaseItemForm(request.POST)
 
         if form.is_valid():
-            # Ambil data dompet dan total transaksi LAMA
             wallet = transaction.wallet
             old_transaction_total = transaction.amount + transaction.admin_fee
 
-            # 1. Kembalikan dulu saldo dompet ke keadaan sebelum transaksi ini
             if transaction.transaction_type == 'PENGELUARAN':
                 wallet.balance += old_transaction_total
 
-            # --- Buat Item Baru ---
             product_name = form.cleaned_data['product_name']
             product, _ = Product.objects.get_or_create(
                 name=product_name,
@@ -593,7 +590,7 @@ class TransactionDetailView(LoginRequiredMixin, View):
             )
 
             new_amount = transaction.items.aggregate(
-                total=Sum(models.F('quantity') * models.F('price'))
+                total=Sum(F('quantity') * F('price'))
             )['total'] or Decimal(0)
 
             transaction.amount = new_amount
