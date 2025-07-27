@@ -17,6 +17,13 @@ class PayeeSerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 class TransactionSerializer(serializers.ModelSerializer):
+    wallet = serializers.StringRelatedField()
+    category = serializers.StringRelatedField()
+    payee = serializers.StringRelatedField()
+
     class Meta:
         model = Transaction
-        fields = '__all__'
+        fields = [
+            'id', 'transaction_date', 'transaction_type',
+            'wallet', 'category', 'payee', 'amount', 'admin_fee', 'notes'
+        ]

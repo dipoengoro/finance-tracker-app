@@ -1,12 +1,21 @@
-from rest_framework import generics
-from .models import Category
-from .serializers import CategorySerializer
+from rest_framework import generics, viewsets
+from .models import Category, Transaction
+from .serializers import CategorySerializer, TransactionSerializer
 
-class CategoryListCreateAPIView(generics.ListCreateAPIView):
+class CategoryListCreateAPIView(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
 
     def get_queryset(self):
         return Category.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+class TransactionViewSet(viewsets.ModelViewSet):
+    serializer_class = TransactionSerializer
+
+    def get_queryset(self):
+        return Transaction.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
