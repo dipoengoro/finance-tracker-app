@@ -14,18 +14,32 @@
 
     <h3 class="mb-3">Item Pembelian</h3>
     <table class="table table-sm">
-        <tbody>
-            {% for item in transaction.items.all %}
-            <tr>
-                <td>{{ item.product.name }}</td>
-                <td>{{ item.quantity }} x Rp {{ item.price|floatformat:0 }}</td>
-                <td class="text-end">Rp {% widthratio item.quantity 1 item.price|floatformat:0 %}</td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="3">Belum ada item yang ditambahkan.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <thead>
+        <tr>
+            <th>Produk</th>
+            <th>Kuantitas & Harga</th>
+            <th class="text-end">Subtotal</th>
+            <th class="text-center">Aksi</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in transaction.items.all %}
+        <tr>
+            <td>{{ item.product.name }}</td>
+            <td>{{ item.quantity }} x Rp {{ item.price|floatformat:0 }}</td>
+            <td class="text-end">Rp {% widthratio item.quantity 1 item.price|floatformat:0 %}</td>
+            <td class="text-center">
+                <form action="{% url 'purchase_item_delete' item.pk %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger">&times;</button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">Belum ada item yang ditambahkan.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
 
     <hr>
     <h3 class="mb-3">Tambah Item Baru</h3>

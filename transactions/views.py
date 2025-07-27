@@ -603,3 +603,33 @@ class TransactionDetailView(LoginRequiredMixin, View):
             wallet.save()
 
         return redirect(reverse('transaction_detail', kwargs={'pk': pk}))
+
+
+@login_required
+def purchase_item_delete(request, pk):
+    if request.method == 'POST':
+        item = PurchaseItem.objects.get(pk=pk, user=request.user)
+        transaction = item.transaction
+        wallet = transaction.wallet
+
+        old_transaction_total = transaction.amount + transaction.admin_fee
+
+        item.delete()
+
+        if transaction.transaction_type == 'PENGELUARAN':
+            wallet.balance += old_transaction_total
+
+        new_amount = transaction.items.aggregate(
+            total=Sum(F('quantity') * F('price'))
+        )['total'] or Decimal(0)
+
+        transaction.amount = new_amount
+        transaction.save()
+
+        new_transaction_total = transaction.amount + transaction.admin_fee
+        if transaction.transaction_type == 'PENGELUARAN':
+            wallet.balance -= new_transaction_total
+
+        wallet.save()
+
+    return redirect(reverse('transaction_detail', kwargs={'pk': transaction.pk}))
