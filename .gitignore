@@ -1,13 +1,16 @@
 # Python
 __pycache__/
 *.pyc
-
+backend/.venv
 # VSCode
 .vscode/
-
-# Idea
 .idea/
 
-db.sqlite3
+# Idea
+backend/.idea/
 
-transactions/migrations/*
+backend/db.sqlite3
+
+backend/transactions/migrations/*
+
+docker-compose.yml
