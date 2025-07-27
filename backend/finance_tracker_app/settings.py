@@ -141,5 +141,5 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 ALLOWED_HOSTS = [
-    "https://dipoengoro-q3bno.ondigitalocean.app/"
+    "dipoengoro-q3bno.ondigitalocean.app"
 ]
