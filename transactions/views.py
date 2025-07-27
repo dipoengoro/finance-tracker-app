@@ -14,8 +14,8 @@ from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 
-from .models import Transaction, Category, Wallet, Payee, Budget, FinancialGoal, Debt, Transfer
 from .forms import WalletUpdateForm
+from .models import Transaction, Category, Wallet, Payee, Budget, FinancialGoal, Debt, Transfer
 
 
 class TransactionListView(LoginRequiredMixin, ListView):
@@ -25,8 +25,8 @@ class TransactionListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         user = self.request.user
-        return (Transaction.objects.filter(Q(user=user) | Q(wallet__shared_with=user)).distinct().order_by(
-            '-transaction_date'))
+        return (
+        Transaction.objects.filter(Q(user=user) | Q(wallet__shared_with=user)).distinct().order_by('-transaction_date'))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -203,14 +203,16 @@ class BudgetListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        user = self.request.user
         budgets = context['budgets']
 
+        accessible_wallets = Wallet.objects.filter(Q(user=user) | Q(shared_with=user)).distinct()
+
         for budget in budgets:
-            spent = \
-            Transaction.objects.filter(user=self.request.user, category=budget.category, transaction_type='PENGELUARAN',
-                                       transaction_date__year=budget.month.year,
-                                       transaction_date__month=budget.month.month, ).aggregate(
-                total_spent=Sum('amount'))['total_spent'] or Decimal(0)
+            spent = Transaction.objects.filter(wallet__in=accessible_wallets, category=budget.category,
+                transaction_type='PENGELUARAN', transaction_date__year=budget.month.year,
+                transaction_date__month=budget.month.month).aggregate(total_spent=Sum('amount'))[
+                        'total_spent'] or Decimal(0)
 
             budget.spent = spent
             budget.remaining = budget.amount - spent
@@ -246,7 +248,8 @@ class FinancialGoalListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['wallets'] = Wallet.objects.filter(wallet_type='ASET', user=self.request.user)
+        user = self.request.user
+        context['wallets'] = Wallet.objects.filter(Q(user=user) | Q(shared_with=user)).distinct()
         return context
 
 
@@ -296,7 +299,8 @@ class DebtListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['wallets'] = Wallet.objects.filter(wallet_type='ASET', user=self.request.user)
+        user = self.request.user
+        context['wallets'] = Wallet.objects.filter(Q(user=user) | Q(shared_with=user)).distinct()
         return context
 
 
@@ -344,8 +348,11 @@ class TransferListView(LoginRequiredMixin, ListView):
     context_object_name = 'transfers'
 
     def get_queryset(self):
-        return Transfer.objects.filter(user=self.request.user).order_by('-transfer_date')
-
+        user = self.request.user
+        accessible_wallets = Wallet.objects.filter(Q(user=user) | Q(shared_with=user)).distinct()
+        return Transfer.objects.filter(
+            Q(from_wallet__in=accessible_wallets) | Q(to_wallet__in=accessible_wallets)
+        ).distinct().order_by('-transfer_date')
 
 class TransferCreateView(LoginRequiredMixin, CreateView):
     model = Transfer
