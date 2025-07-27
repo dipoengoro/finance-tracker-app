@@ -501,3 +501,38 @@ class CategoryDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_queryset(self):
         return Category.objects.filter(user=self.request.user)
+
+class PayeeListView(LoginRequiredMixin, ListView):
+    model = Payee
+    template_name = 'transactions/payee_list.html'
+    context_object_name = 'payees'
+
+    def get_queryset(self):
+        return Payee.objects.filter(user=self.request.user)
+
+class PayeeCreateView(LoginRequiredMixin, CreateView):
+    model = Payee
+    fields = ['name']
+    template_name = 'transactions/payee_form.html'
+    success_url = reverse_lazy('payee_list')
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super().form_valid(form)
+
+class PayeeUpdateView(LoginRequiredMixin, UpdateView):
+    model = Payee
+    fields = ['name']
+    template_name = 'transactions/payee_form.html'
+    success_url = reverse_lazy('payee_list')
+
+    def get_queryset(self):
+        return Payee.objects.filter(user=self.request.user)
+
+class PayeeDeleteView(LoginRequiredMixin, DeleteView):
+    model = Payee
+    template_name = 'transactions/payee_confirm_delete.html'
+    success_url = reverse_lazy('payee_list')
+
+    def get_queryset(self):
+        return Payee.objects.filter(user=self.request.user)

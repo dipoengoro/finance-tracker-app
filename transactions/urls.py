@@ -26,4 +26,8 @@ urlpatterns = [path('', views.TransactionListView.as_view(), name='transaction_l
                path('categories/', views.CategoryListView.as_view(), name='category_list'),
                path('categories/add/', views.CategoryCreateView.as_view(), name='category_create'),
                path('categories/update/<int:pk>/', views.CategoryUpdateView.as_view(), name='category_update'),
-               path('categories/delete/<int:pk>/', views.CategoryDeleteView.as_view(), name='category_delete'), ]
+               path('categories/delete/<int:pk>/', views.CategoryDeleteView.as_view(), name='category_delete'),
+               path('payees/', views.PayeeListView.as_view(), name='payee_list'),
+               path('payees/add/', views.PayeeCreateView.as_view(), name='payee_create'),
+               path('payees/update/<int:pk>/', views.PayeeUpdateView.as_view(), name='payee_update'),
+               path('payees/delete/<int:pk>/', views.PayeeDeleteView.as_view(), name='payee_delete'), ]

@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Konfirmasi Hapus{% endblock %}
+{% block content %}
+    <h1 class="mb-4">Konfirmasi Hapus</h1>
+    <p>Apakah Anda yakin ingin menghapus penerima: <strong>{{ object.name }}</strong>?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Ya, Hapus</button>
+        <a href="{% url 'payee_list' %}" class="btn btn-secondary">Batal</a>
+    </form>
+{% endblock %}

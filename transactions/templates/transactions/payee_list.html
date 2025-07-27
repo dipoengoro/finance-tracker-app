@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Kelola Penerima{% endblock %}
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Kelola Penerima</h1>
+        <a href="{% url 'payee_create' %}" class="btn btn-primary">Tambah Penerima Baru</a>
+    </div>
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Nama</th>
+                <th class="text-center">Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payee in payees %}
+            <tr>
+                <td>{{ payee.name }}</td>
+                <td class="text-center">
+                    <a href="{% url 'payee_update' payee.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                    <a href="{% url 'payee_delete' payee.pk %}" class="btn btn-sm btn-outline-danger">Hapus</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
