@@ -1,49 +1,16 @@
 {% extends 'base.html' %}
 
-{% block title %}{% if form.instance.pk %}Edit{% else %}Tambah{% endif %} Transaksi{% endblock %}
+{% block title %}Form Transaksi{% endblock %}
 
 {% block content %}
     <h1 class="mb-4">{% if form.instance.pk %}Edit{% else %}Tambah{% endif %} Transaksi</h1>
 
     <form method="post">
         {% csrf_token %}
-
         <div class="mb-3">
             {{ form.as_p }}
         </div>
-
-        <button type="submit" class="btn btn-success">Simpan Perubahan</button>
+        <button type="submit" class="btn btn-success">Simpan</button>
         <a href="{% url 'transaction_list' %}" class="btn btn-secondary">Batal</a>
     </form>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const formFields = document.querySelectorAll('.mb-3 p');
-        formFields.forEach(function(field) {
-            const label = field.querySelector('label');
-            const input = field.querySelector('input, select, textarea');
-
-            if (input) {
-                if (input.tagName === 'SELECT') {
-                    input.classList.add('form-select');
-                } else if (input.type !== 'checkbox') {
-                    input.classList.add('form-control');
-                }
-                if (input.type === 'checkbox') {
-                    const wrapper = document.createElement('div');
-                    wrapper.classList.add('form-check');
-                    input.classList.add('form-check-input');
-                    label.classList.add('form-check-label');
-
-                    field.innerHTML = '';
-                    wrapper.appendChild(input);
-                    wrapper.appendChild(label);
-                    field.appendChild(wrapper);
-                }
-            }
-        });
-    });
-</script>
 {% endblock %}

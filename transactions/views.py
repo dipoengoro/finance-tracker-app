@@ -97,16 +97,21 @@ class TransactionUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'transactions/transaction_form.html'
 
     def get_queryset(self):
+        """Pastikan user hanya bisa mengedit transaksinya sendiri."""
         return Transaction.objects.filter(user=self.request.user)
 
     def get_success_url(self):
         return reverse_lazy('transaction_list')
 
     def form_valid(self, form):
+        # Ambil data lama sebelum disimpan
         old_transaction = self.get_object()
 
+        # Simpan form untuk mendapatkan objek yang diperbarui
         self.object = form.save(commit=False)
 
+        # --- Logika Kalkulasi Ulang Saldo ---
+        # 1. Kembalikan saldo dari transaksi lama
         old_wallet = old_transaction.wallet
         if old_transaction.transaction_type == 'PENGELUARAN':
             old_wallet.balance += (old_transaction.amount + old_transaction.admin_fee)
@@ -116,6 +121,7 @@ class TransactionUpdateView(LoginRequiredMixin, UpdateView):
         if old_wallet.pk != self.object.wallet.pk:
             old_wallet.save()
 
+        # 2. Terapkan saldo ke dompet baru (atau dompet yang sama)
         new_wallet = self.object.wallet
         if self.object.transaction_type == 'PENGELUARAN':
             new_wallet.balance -= (self.object.amount + self.object.admin_fee)
@@ -124,7 +130,6 @@ class TransactionUpdateView(LoginRequiredMixin, UpdateView):
         new_wallet.save()
 
         self.object.save()
-
         return redirect(self.get_success_url())
 
 
