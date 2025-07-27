@@ -10,7 +10,7 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 
 from .models import Transaction, Category, Wallet, Payee, Budget, FinancialGoal, Debt, Transfer
 
@@ -370,3 +370,38 @@ def export_transactions(request):
         ])
 
     return response
+
+class WalletListView(LoginRequiredMixin, ListView):
+    model = Wallet
+    template_name = 'transactions/wallet_list.html'
+    context_object_name = 'wallets'
+
+    def get_queryset(self):
+        return Wallet.objects.filter(user=self.request.user)
+
+class WalletCreateView(LoginRequiredMixin, CreateView):
+    model = Wallet
+    fields = ['name', 'wallet_type', 'balance']
+    template_name = 'transactions/wallet_form.html'
+    success_url = reverse_lazy('wallet_list')
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super().form_valid(form)
+
+class WalletUpdateView(LoginRequiredMixin, UpdateView):
+    model = Wallet
+    fields = ['name', 'wallet_type', 'balance']
+    template_name = 'transactions/wallet_form.html'
+    success_url = reverse_lazy('wallet_list')
+
+    def get_queryset(self):
+        return Wallet.objects.filter(user=self.request.user)
+
+class WalletDeleteView(LoginRequiredMixin, DeleteView):
+    model = Wallet
+    template_name = 'transactions/wallet_confirm_delete.html'
+    success_url = reverse_lazy('wallet_list')
+
+    def get_queryset(self):
+        return Wallet.objects.filter(user=self.request.user)

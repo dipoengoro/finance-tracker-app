@@ -1,8 +1,8 @@
 from django.urls import path
+
 from . import views
 
-urlpatterns = [
-    path('', views.TransactionListView.as_view(), name='transaction_list'),
+urlpatterns = [path('', views.TransactionListView.as_view(), name='transaction_list'),
     path('add/', views.transaction_add, name='transaction_add'),
     path('delete/<int:pk>/', views.transaction_delete, name='transaction_delete'),
     path('update/<int:pk>/', views.TransactionUpdateView.as_view(), name='transaction_update'),
@@ -18,4 +18,7 @@ urlpatterns = [
     path('transfers/add/', views.TransferCreateView.as_view(), name='transfer_create'),
     path('dashboard/', views.dashboard_view, name='dashboard'),
     path('export/', views.export_transactions, name='transaction_export'),
-]
+    path('wallets/', views.WalletListView.as_view(), name='wallet_list'),
+    path('wallets/add/', views.WalletCreateView.as_view(), name='wallet_create'),
+    path('wallets/update/<int:pk>/', views.WalletUpdateView.as_view(), name='wallet_update'),
+    path('wallets/delete/<int:pk>/', views.WalletDeleteView.as_view(), name='wallet_delete'), ]
