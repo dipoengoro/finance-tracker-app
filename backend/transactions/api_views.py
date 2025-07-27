@@ -1,4 +1,5 @@
 from rest_framework import viewsets, status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import Category, Wallet, Payee, Transaction, Budget, FinancialGoal, Debt, Transfer
 from .serializers import (
@@ -7,6 +8,8 @@ from .serializers import (
 )
 
 class BaseUserViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
 

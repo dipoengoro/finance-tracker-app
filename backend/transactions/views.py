@@ -9,7 +9,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.db.models import Sum, Q, F
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.middleware.csrf import get_token
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, View
@@ -669,3 +670,6 @@ def purchase_item_update(request, pk):
         wallet.save()
 
     return redirect(reverse('transaction_detail', kwargs={'pk': transaction.pk}))
+
+def csrf_token_view(request):
+    return JsonResponse({'detail': 'CSRF cookie set'})
