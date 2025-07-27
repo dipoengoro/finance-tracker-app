@@ -1,11 +1,13 @@
 import json
 import csv
+import io
 from datetime import date
 from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import transaction
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -132,6 +134,51 @@ class TransactionUpdateView(LoginRequiredMixin, UpdateView):
         self.object.save()
         return redirect(self.get_success_url())
 
+
+@login_required
+@transaction.atomic
+def transaction_import(request):
+    if request.method == 'POST' and request.FILES.get('csv_file'):
+        csv_file = request.FILES['csv_file']
+
+        if not csv_file.name.endswith('.csv'):
+            messages.error(request, 'File harus berformat CSV.')
+            return redirect(reverse('transaction_import'))
+
+        data_set = csv_file.read().decode('UTF-8')
+        io_string = io.StringIO(data_set)
+
+        next(io_string)
+
+        reader = csv.reader(io_string)
+        for row in reader:
+            trans_date_str, trans_type, payee_name, category_name, amount_str, admin_fee_str, wallet_name, notes = row
+
+            user = request.user
+            amount = Decimal(amount_str)
+            admin_fee = Decimal(admin_fee_str or 0)
+
+            wallet, _ = Wallet.objects.get_or_create(name=wallet_name, user=user)
+            category, _ = Category.objects.get_or_create(name=category_name, user=user)
+            payee, _ = Payee.objects.get_or_create(name=payee_name, user=user)
+
+            Transaction.objects.create(
+                user=user, wallet=wallet, category=category, payee=payee,
+                amount=amount, admin_fee=admin_fee, transaction_type=trans_type,
+                transaction_date=trans_date_str, notes=notes
+            )
+
+            total_expense = amount + admin_fee
+            if trans_type == 'PENGELUARAN':
+                wallet.balance -= total_expense
+            elif trans_type == 'PEMASUKAN':
+                wallet.balance += amount
+            wallet.save()
+
+        messages.success(request, 'Data berhasil diimpor.')
+        return redirect(reverse('transaction_list'))
+
+    return render(request, 'transactions/import_form.html')
 
 class BudgetListView(LoginRequiredMixin, ListView):
     model = Budget
