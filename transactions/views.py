@@ -74,13 +74,14 @@ def transaction_add(request):
 @login_required
 def transaction_delete(request, pk):
     if request.method == 'POST':
-        user = request.user
-        transaction = Transaction.objects.get(pk=pk, user=user)
+        transaction = Transaction.objects.get(pk=pk, user=request.user)
         wallet = transaction.wallet
         amount = transaction.amount
+        admin_fee = transaction.admin_fee
 
+        total_expense = amount + admin_fee
         if transaction.transaction_type == 'PENGELUARAN':
-            wallet.balance += amount
+            wallet.balance += total_expense
         elif transaction.transaction_type == 'PEMASUKAN':
             wallet.balance -= amount
         wallet.save()

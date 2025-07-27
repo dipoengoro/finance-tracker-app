@@ -30,13 +30,12 @@
 
             </div>
             <div class="col-md-4">
-                <input list="category-list" name="category" class="form-control"
-                       placeholder="Pilih atau buat kategori..." required>
-                <datalist id="category-list">
+                <select name="category" class="form-select" required>
+                    <option value="">Pilih Kategori...</option>
                     {% for category in categories %}
-                        <option value="{{ category.name }}">
+                        <option value="{{ category.pk }}">{{ category.name }}</option>
                     {% endfor %}
-                </datalist>
+                </select>
             </div>
             <div class="col-md-4">
                 <div class="input-group">
@@ -67,6 +66,7 @@
                 <th>Penerima/Tujuan</th>
                 <th>Kategori</th>
                 <th class="text-end">Jumlah</th>
+                <th class="text-center">Aksi</th>
             </tr>
             </thead>
             <tbody>
@@ -77,10 +77,16 @@
                     <td>{{ tx.payee.name|default:"-" }}</td>
                     <td>{{ tx.category.name|default:"-" }}</td>
                     <td class="text-end">Rp {{ tx.amount|floatformat:0 }}</td>
+                    <td class="text-center">
+                        <form action="{% url 'transaction_delete' tx.pk %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Hapus</button>
+                        </form>
+                    </td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="5" class="text-center p-4">Belum ada transaksi.</td>
+                    <td colspan="6" class="text-center p-4">Belum ada transaksi.</td>
                 </tr>
             {% endfor %}
             </tbody>
