@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Form Dompet{% endblock %}
+{% block content %}
+    <h1 class="mb-4">{% if form.instance.pk %}Edit{% else %}Tambah{% endif %} Dompet</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-success">Simpan</button>
+    </form>
+{% endblock %}
