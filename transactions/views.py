@@ -447,9 +447,14 @@ class WalletCreateView(LoginRequiredMixin, CreateView):
 
 class WalletUpdateView(LoginRequiredMixin, UpdateView):
     model = Wallet
-    fields = ['name', 'wallet_type', 'balance']
+    form_class = WalletUpdateForm
     template_name = 'transactions/wallet_form.html'
     success_url = reverse_lazy('wallet_list')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
 
     def get_queryset(self):
         return Wallet.objects.filter(user=self.request.user)

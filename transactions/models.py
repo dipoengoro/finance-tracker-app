@@ -19,6 +19,7 @@ class Wallet(models.Model):
     name = models.CharField(max_length=100)
     wallet_type = models.CharField(max_length=10, choices=WalletType.choices, default=WalletType.ASSET)
     balance = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
+    shared_with = models.ManyToManyField(User, related_name='shared_wallets', blank=True)
 
     def __str__(self):
         return self.name
