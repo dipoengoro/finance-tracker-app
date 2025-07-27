@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Impor Transaksi{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">Impor Transaksi dari CSV</h1>
+
+    <div class="alert alert-info">
+        <h5 class="alert-heading">Format File CSV</h5>
+        <p>Pastikan file CSV Anda memiliki header dan urutan kolom sebagai berikut:</p>
+        <code>Tanggal,Tipe,Penerima,Kategori,Jumlah,Biaya Admin,Dompet,Catatan</code><br>
+        <p class="mt-2">Contoh baris:</p>
+        <code>2025-07-28,PENGELUARAN,Supermarket,Kebutuhan Pangan,150000,0,BCA,Belanja bulanan</code>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="csv_file" class="form-label">Pilih File CSV</label>
+            <input class="form-control" type="file" id="csv_file" name="csv_file" accept=".csv" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Impor</button>
+    </form>
+{% endblock %}

@@ -1,6 +1,6 @@
-import json
 import csv
 import io
+import json
 from datetime import date
 from decimal import Decimal
 
@@ -51,17 +51,9 @@ def transaction_add(request):
         category = Category.objects.get(pk=category_id, user=user)
         payee, _ = Payee.objects.get_or_create(name=payee_name, defaults={'user': user})
 
-        Transaction.objects.create(
-            user=user,
-            wallet=wallet,
-            payee=payee,
-            category=category,
-            amount=amount,
-            admin_fee=admin_fee,
-            transaction_type=trans_type,
-            transaction_date=trans_date,
-            notes=notes
-        )
+        Transaction.objects.create(user=user, wallet=wallet, payee=payee, category=category, amount=amount,
+                                   admin_fee=admin_fee, transaction_type=trans_type, transaction_date=trans_date,
+                                   notes=notes)
 
         total_expense = amount + admin_fee
         if trans_type == 'PENGELUARAN':
@@ -162,11 +154,9 @@ def transaction_import(request):
             category, _ = Category.objects.get_or_create(name=category_name, user=user)
             payee, _ = Payee.objects.get_or_create(name=payee_name, user=user)
 
-            Transaction.objects.create(
-                user=user, wallet=wallet, category=category, payee=payee,
-                amount=amount, admin_fee=admin_fee, transaction_type=trans_type,
-                transaction_date=trans_date_str, notes=notes
-            )
+            Transaction.objects.create(user=user, wallet=wallet, category=category, payee=payee, amount=amount,
+                                       admin_fee=admin_fee, transaction_type=trans_type,
+                                       transaction_date=trans_date_str, notes=notes)
 
             total_expense = amount + admin_fee
             if trans_type == 'PENGELUARAN':
@@ -179,6 +169,27 @@ def transaction_import(request):
         return redirect(reverse('transaction_list'))
 
     return render(request, 'transactions/import_form.html')
+
+
+@login_required
+def export_transactions(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="transaksi.csv"'
+
+    writer = csv.writer(response)
+    # Tulis baris header
+    writer.writerow(['Tanggal', 'Tipe', 'Penerima/Tujuan', 'Kategori', 'Jumlah', 'Biaya Admin', 'Dompet', 'Catatan'])
+
+    # Ambil data transaksi milik pengguna dan urutkan
+    transactions = Transaction.objects.filter(user=request.user).order_by('transaction_date')
+
+    # Tulis data baris per baris
+    for tx in transactions:
+        writer.writerow([tx.transaction_date, tx.get_transaction_type_display(), tx.payee.name if tx.payee else '',
+                         tx.category.name if tx.category else '', tx.amount, tx.admin_fee, tx.wallet.name, tx.notes])
+
+    return response
+
 
 class BudgetListView(LoginRequiredMixin, ListView):
     model = Budget
@@ -249,6 +260,7 @@ class FinancialGoalCreateView(LoginRequiredMixin, CreateView):
         form.instance.user = self.request.user
         return super().form_valid(form)
 
+
 @login_required
 def add_saving_to_goal(request, pk):
     user = request.user
@@ -297,6 +309,7 @@ class DebtCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.user = self.request.user
         return super().form_valid(form)
+
 
 @login_required
 def pay_debt(request, pk):
@@ -412,30 +425,6 @@ def dashboard_view(request):
     return render(request, 'transactions/dashboard.html', context)
 
 
-@login_required
-def export_transactions(request):
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="transaksi.csv"'
-
-    writer = csv.writer(response)
-    writer.writerow(['Tanggal', 'Tipe', 'Penerima/Tujuan', 'Kategori', 'Jumlah', 'Biaya Admin', 'Dompet', 'Catatan'])
-
-    transactions = Transaction.objects.filter(user=request.user).order_by('transaction_date')
-
-    for tx in transactions:
-        writer.writerow([
-            tx.transaction_date,
-            tx.get_transaction_type_display(),
-            tx.payee.name if tx.payee else '',
-            tx.category.name if tx.category else '',
-            tx.amount,
-            tx.admin_fee,
-            tx.wallet.name,
-            tx.notes
-        ])
-
-    return response
-
 class WalletListView(LoginRequiredMixin, ListView):
     model = Wallet
     template_name = 'transactions/wallet_list.html'
@@ -443,6 +432,7 @@ class WalletListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return Wallet.objects.filter(user=self.request.user)
+
 
 class WalletCreateView(LoginRequiredMixin, CreateView):
     model = Wallet
@@ -454,6 +444,7 @@ class WalletCreateView(LoginRequiredMixin, CreateView):
         form.instance.user = self.request.user
         return super().form_valid(form)
 
+
 class WalletUpdateView(LoginRequiredMixin, UpdateView):
     model = Wallet
     fields = ['name', 'wallet_type', 'balance']
@@ -463,6 +454,7 @@ class WalletUpdateView(LoginRequiredMixin, UpdateView):
     def get_queryset(self):
         return Wallet.objects.filter(user=self.request.user)
 
+
 class WalletDeleteView(LoginRequiredMixin, DeleteView):
     model = Wallet
     template_name = 'transactions/wallet_confirm_delete.html'
@@ -470,3 +462,42 @@ class WalletDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_queryset(self):
         return Wallet.objects.filter(user=self.request.user)
+
+
+class CategoryListView(LoginRequiredMixin, ListView):
+    model = Category
+    template_name = 'transactions/category_list.html'
+    context_object_name = 'categories'
+
+    def get_queryset(self):
+        return Category.objects.filter(user=self.request.user)
+
+
+class CategoryCreateView(LoginRequiredMixin, CreateView):
+    model = Category
+    fields = ['name', 'description']
+    template_name = 'transactions/category_form.html'
+    success_url = reverse_lazy('category_list')
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super().form_valid(form)
+
+
+class CategoryUpdateView(LoginRequiredMixin, UpdateView):
+    model = Category
+    fields = ['name', 'description']
+    template_name = 'transactions/category_form.html'
+    success_url = reverse_lazy('category_list')
+
+    def get_queryset(self):
+        return Category.objects.filter(user=self.request.user)
+
+
+class CategoryDeleteView(LoginRequiredMixin, DeleteView):
+    model = Category
+    template_name = 'transactions/category_confirm_delete.html'
+    success_url = reverse_lazy('category_list')
+
+    def get_queryset(self):
+        return Category.objects.filter(user=self.request.user)
