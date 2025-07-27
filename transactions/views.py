@@ -38,20 +38,32 @@ def transaction_add(request):
         user = request.user
         wallet_id = request.POST.get('wallet')
         payee_name = request.POST.get('payee')
-        category_name = request.POST.get('category')
+        category_id = request.POST.get('category')
         amount = Decimal(request.POST.get('amount'))
+        admin_fee = Decimal(request.POST.get('admin_fee') or 0)
         trans_type = request.POST.get('transaction_type')
         trans_date = request.POST.get('transaction_date')
+        notes = request.POST.get('notes')
 
         wallet = Wallet.objects.get(pk=wallet_id, user=user)
-        category, _ = Category.objects.get_or_create(name=category_name, user=user)
-        payee, _ = Payee.objects.get_or_create(name=payee_name, user=user)
+        category = Category.objects.get(pk=category_id, user=user)
+        payee, _ = Payee.objects.get_or_create(name=payee_name, defaults={'user': user})
 
-        Transaction.objects.create(user=user, wallet=wallet, payee=payee, category=category, amount=amount,
-                                   transaction_type=trans_type, transaction_date=trans_date, )
+        Transaction.objects.create(
+            user=user,
+            wallet=wallet,
+            payee=payee,
+            category=category,
+            amount=amount,
+            admin_fee=admin_fee,
+            transaction_type=trans_type,
+            transaction_date=trans_date,
+            notes=notes
+        )
 
+        total_expense = amount + admin_fee
         if trans_type == 'PENGELUARAN':
-            wallet.balance -= amount
+            wallet.balance -= total_expense
         elif trans_type == 'PEMASUKAN':
             wallet.balance += amount
         wallet.save()

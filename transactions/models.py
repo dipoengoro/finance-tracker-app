@@ -3,19 +3,20 @@ from django.contrib.auth.models import User
 
 class Category(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.name
 
+
 class Wallet(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
     class WalletType(models.TextChoices):
         ASSET = 'ASET', 'Aset'
         LIABILITY = 'LIABILITAS', 'Liabilitas'
 
-    name = models.CharField(max_length=100, unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
     wallet_type = models.CharField(max_length=10, choices=WalletType.choices, default=WalletType.ASSET)
     balance = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
 
@@ -25,18 +26,18 @@ class Wallet(models.Model):
 
 class Payee(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)
 
     def __str__(self):
         return self.name
 
 
 class Transaction(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
     class TransactionType(models.TextChoices):
         INCOME = 'PEMASUKAN', 'Pemasukan'
         EXPENSE = 'PENGELUARAN', 'Pengeluaran'
 
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name='transactions')
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
     payee = models.ForeignKey(Payee, on_delete=models.SET_NULL, null=True, blank=True)
@@ -57,10 +58,11 @@ class Budget(models.Model):
     month = models.DateField()
 
     class Meta:
-        unique_together = ('category', 'month')
+        unique_together = ('user', 'category', 'month')
 
     def __str__(self):
         return f"Budget for {self.category.name} in {self.month.strftime('%B %Y')}"
+
 
 class FinancialGoal(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -78,6 +80,7 @@ class FinancialGoal(models.Model):
             return int((self.current_amount / self.target_amount) * 100)
         return 0
 
+
 class Debt(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     lender_name = models.CharField(max_length=100)
@@ -93,6 +96,7 @@ class Debt(models.Model):
         if self._state.adding:
             self.current_balance = self.initial_amount
         super().save(*args, **kwargs)
+
 
 class Transfer(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

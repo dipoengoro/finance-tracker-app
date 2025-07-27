@@ -67,7 +67,6 @@
                 <th>Penerima/Tujuan</th>
                 <th>Kategori</th>
                 <th class="text-end">Jumlah</th>
-                <th class="text-center">Aksi</th>
             </tr>
             </thead>
             <tbody>
@@ -78,17 +77,10 @@
                     <td>{{ tx.payee.name|default:"-" }}</td>
                     <td>{{ tx.category.name|default:"-" }}</td>
                     <td class="text-end">Rp {{ tx.amount|floatformat:0 }}</td>
-                    <td class="text-center">
-                        <a href="{% url 'transaction_update' tx.pk %}" class="btn btn-sm btn-outline-primary">Edit</a>
-                        <form action="{% url 'transaction_delete' tx.pk %}" method="post" class="d-inline">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Hapus</button>
-                        </form>
-                    </td>
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="6" class="text-center p-4">Belum ada transaksi.</td>
+                    <td colspan="5" class="text-center p-4">Belum ada transaksi.</td>
                 </tr>
             {% endfor %}
             </tbody>
