@@ -15,7 +15,7 @@ from django.urls import reverse, reverse_lazy
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, View
 
 from .forms import WalletUpdateForm, PurchaseItemForm
-from .models import Transaction, Category, Wallet, Payee, Budget, FinancialGoal, Debt, Transfer, Product
+from .models import Transaction, Category, Wallet, Payee, Budget, FinancialGoal, Debt, Transfer, Product, PurchaseItem
 
 
 class TransactionListView(LoginRequiredMixin, ListView):
@@ -569,14 +569,21 @@ class TransactionDetailView(LoginRequiredMixin, View):
         form = PurchaseItemForm(request.POST)
 
         if form.is_valid():
-            product_name = form.cleaned_data['product_name']
+            # Ambil data dompet dan total transaksi LAMA
+            wallet = transaction.wallet
+            old_transaction_total = transaction.amount + transaction.admin_fee
 
+            # 1. Kembalikan dulu saldo dompet ke keadaan sebelum transaksi ini
+            if transaction.transaction_type == 'PENGELUARAN':
+                wallet.balance += old_transaction_total
+
+            # --- Buat Item Baru ---
+            product_name = form.cleaned_data['product_name']
             product, _ = Product.objects.get_or_create(
                 name=product_name,
                 user=request.user,
-                defaults={'category': transaction.category}  # Gunakan kategori transaksi sbg default
+                defaults={'category': transaction.category}
             )
-
             PurchaseItem.objects.create(
                 user=request.user,
                 transaction=transaction,
@@ -584,5 +591,18 @@ class TransactionDetailView(LoginRequiredMixin, View):
                 quantity=form.cleaned_data['quantity'],
                 price=form.cleaned_data['price']
             )
+
+            new_amount = transaction.items.aggregate(
+                total=Sum(models.F('quantity') * models.F('price'))
+            )['total'] or Decimal(0)
+
+            transaction.amount = new_amount
+            transaction.save()
+
+            new_transaction_total = transaction.amount + transaction.admin_fee
+            if transaction.transaction_type == 'PENGELUARAN':
+                wallet.balance -= new_transaction_total
+
+            wallet.save()
 
         return redirect(reverse('transaction_detail', kwargs={'pk': pk}))
