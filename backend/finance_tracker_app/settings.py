@@ -138,9 +138,9 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",
-]
+APP_URL = os.environ.get('APP_URL')
+if APP_URL:
+    CSRF_TRUSTED_ORIGINS = [APP_URL]
 
 ALLOWED_HOSTS = []
 
