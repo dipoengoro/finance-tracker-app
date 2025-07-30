@@ -142,4 +142,12 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
 ]
 
-ALLOWED_HOSTS = [os.environ.get('APP_URL', 'localhost', '127.0.0.1')]
+ALLOWED_HOSTS = []
+
+APP_DOMAIN = os.environ.get('APP_DOMAIN')
+
+if APP_DOMAIN:
+    ALLOWED_HOSTS.append(APP_DOMAIN)
+
+if DEBUG:
+    ALLOWED_HOSTS.extend(['localhost', '127.0.0.1'])
