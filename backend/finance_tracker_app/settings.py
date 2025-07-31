@@ -33,7 +33,7 @@ DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 # dan ganti dengan blok terpusat ini.
 
 ALLOWED_HOSTS = ['www.amalindipo.id']
-CSRF_TRUSTED_ORIGINS = []
+CSRF_TRUSTED_ORIGINS = ['www.amalindipo.id']
 
 # Ambil URL utama aplikasi dari environment variable
 # Contoh di DigitalOcean: https://nama-app-anda.ondigitalocean.app
