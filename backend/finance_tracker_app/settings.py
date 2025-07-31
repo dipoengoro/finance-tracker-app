@@ -32,7 +32,7 @@ DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 # Hapus semua blok ALLOWED_HOSTS dan CSRF_TRUSTED_ORIGINS yang tersebar
 # dan ganti dengan blok terpusat ini.
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['www.amalindipo.id']
 CSRF_TRUSTED_ORIGINS = []
 
 # Ambil URL utama aplikasi dari environment variable
