@@ -24,9 +24,44 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
+# finance_tracker_app/settings.py
+
+# ...
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
+# Hapus semua blok ALLOWED_HOSTS dan CSRF_TRUSTED_ORIGINS yang tersebar
+# dan ganti dengan blok terpusat ini.
+
 ALLOWED_HOSTS = []
+CSRF_TRUSTED_ORIGINS = []
+
+# Ambil URL utama aplikasi dari environment variable
+# Contoh di DigitalOcean: https://nama-app-anda.ondigitalocean.app
+APP_URL = os.environ.get('APP_URL')
+if APP_URL:
+    # CSRF_TRUSTED_ORIGINS butuh URL lengkap dengan https://
+    CSRF_TRUSTED_ORIGINS.append(APP_URL)
+    # ALLOWED_HOSTS hanya butuh hostname-nya saja
+    ALLOWED_HOSTS.append(APP_URL.split("://")[1])
+
+# Izinkan host tambahan dari env var, misal untuk custom domain
+# Format: 'www.domainanda.com,api.domainanda.com'
+additional_hosts = os.environ.get('ALLOWED_HOSTS')
+if additional_hosts:
+    ALLOWED_HOSTS.extend(additional_hosts.split(','))
+
+if DEBUG:
+    ALLOWED_HOSTS.extend(['localhost', '127.0.0.1'])
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+# Tambahkan origin untuk production dari environment variable
+prod_origin = os.environ.get('CORS_PROD_ORIGIN')
+if prod_origin:
+    CORS_ALLOWED_ORIGINS.append(prod_origin)
 
 
 # Application definition
@@ -45,6 +80,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -76,13 +112,20 @@ WSGI_APPLICATION = 'finance_tracker_app.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if 'DATABASE_URL' in os.environ:
+    DATABASES = {
+        'default': dj_database_url.config(
+            conn_max_age=600,
+            ssl_require=True
+        )
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -123,31 +166,11 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Tambahkan setting ini untuk production
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 LOGOUT_REDIRECT_URL = '/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-CORS_ALLOW_CREDENTIALS = True
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
-
-
-APP_URL = os.environ.get('APP_URL')
-if APP_URL:
-    CSRF_TRUSTED_ORIGINS = [APP_URL]
-
-ALLOWED_HOSTS = []
-
-app_hosts = os.environ.get('ALLOWED_HOSTS')
-
-if app_hosts:
-    ALLOWED_HOSTS.extend(app_hosts.split(','))
-
-if DEBUG:
-    ALLOWED_HOSTS.extend(['localhost', '127.0.0.1'])
