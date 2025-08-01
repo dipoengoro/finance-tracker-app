@@ -34,4 +34,5 @@ urlpatterns = [path('csrf/', views.csrf_token_view, name='get-csrf'),
                path('payees/delete/<int:pk>/', views.PayeeDeleteView.as_view(), name='payee_delete'),
                path('<int:pk>/details/', views.TransactionDetailView.as_view(), name='transaction_detail'),
                path('item/delete/<int:pk>/', views.purchase_item_delete, name='purchase_item_delete'),
-               path('item/update/<int:pk>/', views.purchase_item_update, name='purchase_item_update'),]
+               path('item/update/<int:pk>/', views.purchase_item_update, name='purchase_item_update'),
+               path('whoami/', api_views.whoami, name='whoami'),]

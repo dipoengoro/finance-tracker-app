@@ -4,8 +4,14 @@ from rest_framework.response import Response
 from .models import Category, Wallet, Payee, Transaction, Budget, FinancialGoal, Debt, Transfer
 from .serializers import (
     CategorySerializer, WalletSerializer, PayeeSerializer, TransactionSerializer,
-    BudgetSerializer, FinancialGoalSerializer, DebtSerializer, TransferSerializer
+    BudgetSerializer, FinancialGoalSerializer, DebtSerializer, TransferSerializer, UserSerializer
 )
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def whoami(request):
+    serializer = UserSerializer(request.user)
+    return Response(serializer.data)
 
 class BaseUserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]

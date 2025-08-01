@@ -1,6 +1,23 @@
 <script setup lang="ts">
-import {RouterLink, RouterView} from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
+import {RouterLink, RouterView, useRouter} from 'vue-router'
+import apiClient from "@/services/api";
+import {useAuthStore} from "@/stores/auth";
+
+const router = useRouter();
+const authStore = useAuthStore();
+
+const handleLogout = async () => {
+  try {
+    await apiClient.post('/api-auth/logout/');
+
+    authStore.setAuth(false);
+    alert('Logout Berhasil!');
+    router.push('/login');
+  } catch (error) {
+    console.error('Proses logout gagal:', error);
+    alert('Logout Gagal!');
+  }
+}
 </script>
 
 <template>
@@ -14,7 +31,8 @@ import HelloWorld from './components/HelloWorld.vue'
       <nav>
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/about">About</RouterLink>
-        <RouterLink to="/login">Login</RouterLink>
+        <RouterLink v-if="!authStore.isAuthenticated" to="/login">Login</RouterLink>
+        <a v-else href="#" @click.prevent="handleLogout" class="logout-button">Logout</a>
       </nav>
     </div>
   </header>

@@ -2,20 +2,25 @@
 import {ref} from 'vue';
 import {useRouter} from 'vue-router';
 import apiClient from '@/services/api';
+import { useAuthStore } from "@/stores/auth";
 
 const username = ref('');
 const password = ref('');
 const errorMessage = ref('');
 const router = useRouter();
+const authStore = useAuthStore();
 
 const handleLogin = async () => {
   errorMessage.value = '';
 
   try {
-    const response = await apiClient.post('/api-auth/login', {
-      username: username.value,
-      password: password.value,
-    });
+    const loginData = new URLSearchParams();
+    loginData.append('username', username.value);
+    loginData.append('password', password.value);
+
+    await apiClient.post('/api-auth/login/', loginData);
+
+    authStore.setAuth(true);
 
     alert('Login berhasil!');
     router.push('/');
