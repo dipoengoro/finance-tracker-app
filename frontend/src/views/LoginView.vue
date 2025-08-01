@@ -12,13 +12,11 @@ const handleLogin = async () => {
   errorMessage.value = '';
 
   try {
-    await apiClient.get('/csrf/');
-
     const loginData = new URLSearchParams();
     loginData.append('username', username.value);
     loginData.append('password', password.value);
 
-    await apiClient.post('/accounts/login/', loginData);
+    await apiClient.post('/api/auth/login/', loginData);
 
     // Langkah C: Jika berhasil (tidak ada error), redirect ke halaman utama
     alert('Login Berhasil!');
