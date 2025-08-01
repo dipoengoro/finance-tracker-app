@@ -34,6 +34,8 @@ DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = ['www.amalindipo.id', 'http://localhost:5173', 'http://127.0.0.1:5173']
 CSRF_TRUSTED_ORIGINS = ['https://www.amalindipo.id', 'http://localhost:5173', 'http://127.0.0.1:5173']
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 # Ambil URL utama aplikasi dari environment variable
 # Contoh di DigitalOcean: https://nama-app-anda.ondigitalocean.app
@@ -54,6 +56,7 @@ if DEBUG:
     ALLOWED_HOSTS.extend(['localhost', '127.0.0.1'])
 
 CORS_ALLOWED_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173", ]
+CORS_ALLOW_CREDENTIALS = True
 
 # Tambahkan origin untuk production dari environment variable
 prod_origin = os.environ.get('CORS_PROD_ORIGIN')
