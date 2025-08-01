@@ -31,31 +31,39 @@ DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # Hapus semua blok ALLOWED_HOSTS dan CSRF_TRUSTED_ORIGINS yang tersebar
 # dan ganti dengan blok terpusat ini.
-
-ALLOWED_HOSTS = ['www.amalindipo.id', 'http://localhost:5173', 'http://127.0.0.1:5173']
-CSRF_TRUSTED_ORIGINS = ['https://www.amalindipo.id', 'http://localhost:5173', 'http://127.0.0.1:5173']
 CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SAMESITE = 'Lax'
+ALLOWED_HOSTS = []
+CSRF_TRUSTED_ORIGINS = []
+CORS_ALLOWED_ORIGINS = []
 
-# Ambil URL utama aplikasi dari environment variable
-# Contoh di DigitalOcean: https://nama-app-anda.ondigitalocean.app
+
+if DEBUG:
+    ALLOWED_HOSTS.extend(['localhost', '127.0.0.1'])
+    CSRF_TRUSTED_ORIGINS.extend(['http://localhost:5173', 'http://127.0.0.1:5173'])
+    CORS_ALLOWED_ORIGINS.extend(['http://localhost:5173', 'http://127.0.0.1:5173'])
+
+# Ambil URL utama aplikasi dari environment variable DigitalOcean
+# Contoh: https://nama-app-anda.ondigitalocean.app
 APP_URL = os.environ.get('APP_URL')
 if APP_URL:
     # CSRF_TRUSTED_ORIGINS butuh URL lengkap dengan https://
     CSRF_TRUSTED_ORIGINS.append(APP_URL)
-    # ALLOWED_HOSTS hanya butuh hostname-nya saja
-    ALLOWED_HOSTS.append(APP_URL.split("://")[1])
+    # CORS_ALLOWED_ORIGINS juga butuh URL lengkap
+    CORS_ALLOWED_ORIGINS.append(APP_URL)
+    # ALLOWED_HOSTS hanya butuh hostname-nya saja, tanpa https://
+    # Kita ambil dari variabel APP_DOMAIN yang juga disediakan DigitalOcean
+    APP_DOMAIN = os.environ.get('APP_DOMAIN')
+    if APP_DOMAIN:
+        ALLOWED_HOSTS.append(APP_DOMAIN)
 
-# Izinkan host tambahan dari env var, misal untuk custom domain
-# Format: 'www.domainanda.com,api.domainanda.com'
-additional_hosts = os.environ.get('ALLOWED_HOSTS')
-if additional_hosts:
-    ALLOWED_HOSTS.extend(additional_hosts.split(','))
+# Izinkan custom domain jika ada
+CUSTOM_DOMAIN = os.environ.get('CUSTOM_DOMAIN') # misal: www.domainanda.com
+if CUSTOM_DOMAIN:
+    ALLOWED_HOSTS.append(CUSTOM_DOMAIN)
+    CSRF_TRUSTED_ORIGINS.append(f"https://{CUSTOM_DOMAIN}")
+    CORS_ALLOWED_ORIGINS.append(f"https://{CUSTOM_DOMAIN}")
 
-if DEBUG:
-    ALLOWED_HOSTS.extend(['localhost', '127.0.0.1'])
-
-CORS_ALLOWED_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173", ]
 CORS_ALLOW_CREDENTIALS = True
 
 # Tambahkan origin untuk production dari environment variable
