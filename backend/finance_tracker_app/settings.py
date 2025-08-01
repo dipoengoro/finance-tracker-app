@@ -135,5 +135,5 @@ LOGIN_REDIRECT_URL = '/dashboard/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
+ACCOUNT_EMAIL_VERIFICATION = 'none'
 SITE_ID = 1
