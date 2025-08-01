@@ -72,9 +72,9 @@ if prod_origin:
 
 # Application definition
 INSTALLED_APPS = ['django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
-                  'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles', 'rest_framework',
-                  'rest_framework.authtoken', 'corsheaders', 'dj_rest_auth', 'dj_rest_auth.registration',
-                  'transactions', ]
+                  'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles',
+                  'django.contrib.sites', 'rest_framework', 'rest_framework.authtoken', 'corsheaders', 'dj_rest_auth',
+                  'allauth', 'allauth.account', 'allauth.socialaccount', 'dj_rest_auth.registration', 'transactions', ]
 
 MIDDLEWARE = ['django.middleware.security.SecurityMiddleware', 'whitenoise.middleware.WhiteNoiseMiddleware',
               'django.contrib.sessions.middleware.SessionMiddleware', 'corsheaders.middleware.CorsMiddleware',
@@ -134,3 +134,5 @@ LOGIN_REDIRECT_URL = '/dashboard/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
+
+SITE_ID = 1

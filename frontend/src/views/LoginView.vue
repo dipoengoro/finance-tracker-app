@@ -12,14 +12,12 @@ const handleLogin = async () => {
   errorMessage.value = '';
 
   try {
-    const loginData = new URLSearchParams();
-    loginData.append('username', username.value);
-    loginData.append('password', password.value);
+    const response = await apiClient.post('/api-auth/login', {
+      username: username.value,
+      password: password.value,
+    });
 
-    await apiClient.post('/api/auth/login/', loginData);
-
-    // Langkah C: Jika berhasil (tidak ada error), redirect ke halaman utama
-    alert('Login Berhasil!');
+    alert('Login berhasil!');
     router.push('/');
 
   } catch (error) {
