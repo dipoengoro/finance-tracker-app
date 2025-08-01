@@ -7,3 +7,4 @@ psycopg2-binary
 whitenoise
 dj-rest-auth
 django-allauth
+requests
