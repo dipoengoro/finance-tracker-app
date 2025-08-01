@@ -11,8 +11,8 @@ router.register(r'budgets', api_views.BudgetViewSet, basename='budget')
 router.register(r'goals', api_views.FinancialGoalViewSet, basename='goal')
 router.register(r'debts', api_views.DebtViewSet, basename='debt')
 router.register(r'transfers', api_views.TransferViewSet, basename='transfer')
-router.register(r'whoami', api_views.whoami, basename='whoami')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('whoami/', api_views.whoami, name='whoami'),
 ]
