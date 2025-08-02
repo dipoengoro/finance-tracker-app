@@ -2,6 +2,7 @@
 import {RouterLink, RouterView, useRouter} from 'vue-router'
 import apiClient from "@/services/api";
 import {useAuthStore} from "@/stores/auth";
+import HelloWorld from "@/components/HelloWorld.vue";
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -27,12 +28,14 @@ const handleLogout = async () => {
     <div class="wrapper">
       <HelloWorld msg="You did it!"/>
 
-      <
       <nav>
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/about">About</RouterLink>
         <RouterLink v-if="!authStore.isAuthenticated" to="/login">Login</RouterLink>
         <a v-else href="#" @click.prevent="handleLogout" class="logout-button">Logout</a>
+        <span v-if="authStore.isAuthenticated" class="welcome-user">
+          Selamat datang, {{ authStore.user?.username }}
+        </span>
       </nav>
     </div>
   </header>
